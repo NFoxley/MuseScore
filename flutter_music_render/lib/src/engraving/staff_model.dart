@@ -15,8 +15,8 @@ class StaffModel {
   // Standard traditional staff notation
   static const Map<int, double> _trebleRefPositions = {
     // From low to high
-    60: 5.5, // C4 (middle C) is 2nd ledger line below staff
-    62: 5.0, // D4 is 1st ledger line below staff
+    60: 5.5, // C4 (middle C) is 1st ledger line below staff
+    62: 5.0, // D4 is below staff
     64: 4.5, // E4 is bottom line of staff
     65: 4.0, // F4 is space above bottom line
     67: 3.5, // G4 is second line from bottom
@@ -38,16 +38,16 @@ class StaffModel {
     38: 6.0, // D2 is 1st ledger line below staff
     40: 5.5, // E2 is bottom line of staff
     41: 5.0, // F2 is space above bottom line
-    43: 4.5, // G2 is second line from bottom
+    43: 4.5, // G2 is bottom line from bottom
     45: 4.0, // A2 is second space from bottom
     47: 3.5, // B2 is middle line
     48: 3.0, // C3 is space above middle line
-    50: 2.5, // D3 is fourth line from bottom
-    52: 2.0, // E3 is top space
-    53: 1.5, // F3 is top line
-    55: 1.0, // G3 is space above staff
-    57: 0.5, // A3 is 1st ledger line above staff
-    59: 0.0, // B3 is 1st space above 1st ledger
+    50: 2.5, // D3 is middle line
+    52: 2.0, // E3 is second top space
+    53: 1.5, // F3 is second top line
+    55: 1.0, // G3 is top space
+    57: 0.5, // A3 is top line
+    59: 0.0, // B3 is space above staff
     60: -0.5, // C4 (middle C) is 2nd ledger line above staff
   };
 
@@ -55,55 +55,95 @@ class StaffModel {
   // Maps MIDI pitch to staff line positions based on accidental type
   // This allows D# and Eb (both MIDI 63) to be drawn at different positions
   static const Map<int, Map<AccidentalType, double>> _enharmonicPositions = {
+    // MIDI 42: F#2/Gb2
+    42: {
+      AccidentalType.sharp: 5.0, // C#4 - same line as C4
+      AccidentalType.flat: 4.5, // Db4 - same line as D4
+    },
+    // MIDI 44: G#2/Ab2
+    44: {
+      AccidentalType.sharp: 4.5, // C#4 - same line as C4
+      AccidentalType.flat: 4.0, // Db4 - same line as D4
+    },
+    // MIDI 46: A#2/Bb2
+    46: {
+      AccidentalType.sharp: 4.0, // C#4 - same line as C4
+      AccidentalType.flat: 3.5, // Db4 - same line as D4
+    },
+    // MIDI 49: C#3/Db3
+    49: {
+      AccidentalType.sharp: 3.0, // C#4 - same line as C4
+      AccidentalType.flat: 2.5, // Db4 - same line as D4
+    },
+    // MIDI 51: D#3/Eb3
+    51: {
+      AccidentalType.sharp: 2.5, // C#4 - same line as C4
+      AccidentalType.flat: 2.0, // Db4 - same line as D4
+    },
+    // MIDI 54: F#3/Gb3
+    54: {
+      AccidentalType.sharp: 1.5, // C#4 - same line as C4
+      AccidentalType.flat: 1.0, // Db4 - same line as D4
+    },
+    // MIDI 56: G#3/Ab3
+    56: {
+      AccidentalType.sharp: 1.0, // C#4 - same line as C4
+      AccidentalType.flat: 0.5, // Db4 - same line as D4
+    },
+    // MIDI 58: A#3/Bb3
+    58: {
+      AccidentalType.sharp: 0.5, // C#4 - same line as C4
+      AccidentalType.flat: 0.0, // Db4 - same line as D4
+    },
     // MIDI 61: C#4/Db4
     61: {
-      AccidentalType.sharp: 6.0, // C#4 - same line as C4
+      AccidentalType.sharp: 5.5, // C#4 - same line as C4
       AccidentalType.flat: 5.0, // Db4 - same line as D4
     },
     // MIDI 63: D#4/Eb4
     63: {
       AccidentalType.sharp: 5.0, // D#4 - same line as D4
-      AccidentalType.flat: 4.0, // Eb4 - same line as E4
+      AccidentalType.flat: 4.5, // Eb4 - same line as E4
     },
     // MIDI 66: F#4/Gb4
     66: {
-      AccidentalType.sharp: 3.5, // F#4 - same space as F4
-      AccidentalType.flat: 3.0, // Gb4 - same line as G4
+      AccidentalType.sharp: 4.0, // F#4 - same space as F4
+      AccidentalType.flat: 3.5, // Gb4 - same line as G4
     },
     // MIDI 68: G#4/Ab4
     68: {
-      AccidentalType.sharp: 3.0, // G#4 - same line as G4
-      AccidentalType.flat: 2.5, // Ab4 - same space as A4
+      AccidentalType.sharp: 3.5, // G#4 - same line as G4
+      AccidentalType.flat: 3.0, // Ab4 - same space as A4
     },
     // MIDI 70: A#4/Bb4
     70: {
-      AccidentalType.sharp: 2.5, // A#4 - same space as A4
-      AccidentalType.flat: 2.0, // Bb4 - same line as B4
+      AccidentalType.sharp: 3.0, // A#4 - same space as A4
+      AccidentalType.flat: 2.5, // Bb4 - same line as B4
     },
     // MIDI 73: C#5/Db5
     73: {
-      AccidentalType.sharp: 1.5, // C#5 - same space as C5
-      AccidentalType.flat: 1.0, // Db5 - same line as D5
+      AccidentalType.sharp: 2.0, // C#5 - same space as C5
+      AccidentalType.flat: 1.5, // Db5 - same line as D5
     },
     // MIDI 75: D#5/Eb5
     75: {
-      AccidentalType.sharp: 1.0, // D#5 - same line as D5
-      AccidentalType.flat: 0.5, // Eb5 - same space as E5
+      AccidentalType.sharp: 1.5, // D#5 - same line as D5
+      AccidentalType.flat: 1.0, // Eb5 - same space as E5
     },
     // MIDI 78: F#5/Gb5
     78: {
-      AccidentalType.sharp: 0.0, // F#5 - same line as F5
-      AccidentalType.flat: -0.5, // Gb5 - same space as G5
+      AccidentalType.sharp: 0.5, // F#5 - same line as F5
+      AccidentalType.flat: 0.0, // Gb5 - same space as G5
     },
     // MIDI 80: G#5/Ab5
     80: {
-      AccidentalType.sharp: -0.5, // G#5 - same space as G5
-      AccidentalType.flat: -1.0, // Ab5 - same line as A5
+      AccidentalType.sharp: 0.0, // G#5 - same space as G5
+      AccidentalType.flat: -0.5, // Ab5 - same line as A5
     },
     // MIDI 82: A#5/Bb5
     82: {
-      AccidentalType.sharp: -1.0, // A#5 - same line as A5
-      AccidentalType.flat: -1.5, // Bb5 - same space as B5
+      AccidentalType.sharp: -0.5, // A#5 - same line as A5
+      AccidentalType.flat: -1.0, // Bb5 - same space as B5
     },
   };
 
