@@ -109,6 +109,9 @@ class Note {
         return '𝄫';
     }
   }
+
+  /// Get the pitch class of the note (0-11)
+  int get pitchClass => midiPitch % 12;
 }
 
 /// Represents the duration of a note

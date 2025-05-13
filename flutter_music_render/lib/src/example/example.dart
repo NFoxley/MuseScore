@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_music_render/flutter_music_render.dart';
-import 'package:flutter_music_render/src/engraving/key_signature.dart'
-    as key_sig;
 
 /// A simple example that demonstrates the piano keyboard and staff widgets.
-/// Copy and paste this entire file into your Flutter app to get started.
+///
+/// To use this example in your app:
+/// 1. Add flutter_music_render to your pubspec.yaml:
+///    ```yaml
+///    dependencies:
+///      flutter_music_render:
+///        path: /path/to/flutter_music_render
+///    ```
+/// 2. Run `flutter pub get`
+/// 3. Copy this entire file into your app
+/// 4. Update the main() function to use your app's entry point
 class PianoKeyboardExample extends StatefulWidget {
   const PianoKeyboardExample({super.key});
 
@@ -28,18 +36,29 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
 
   Clef _clef = Clef.treble;
   bool _useFlats = false;
-  KeySignature _keySignature = KeySignature(key: key_sig.Key.c);
+  KeySignature _keySignature = KeySignature(key: MusicalKey.c);
   final TimeSignature _timeSignature = TimeSignature(4, 4);
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize key signature state
+    _keySignature.initializeNoteState();
+  }
 
   void _handleNoteSelected(Note note) {
     setState(() {
       _notes.add(note);
+      // Update key signature state after adding note
+      _keySignature.updateNoteState(note);
     });
   }
 
   void _handleClear() {
     setState(() {
       _notes.clear();
+      // Reinitialize key signature state after clearing notes
+      _keySignature.initializeNoteState();
     });
   }
 
@@ -58,6 +77,10 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
   void _changeKeySignature(KeySignature key) {
     setState(() {
       _keySignature = key;
+      // Initialize new key signature state
+      _keySignature.initializeNoteState();
+      // Clear notes when changing key
+      _notes.clear();
     });
   }
 
@@ -83,19 +106,19 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
             onSelected: _changeKeySignature,
             itemBuilder: (context) => [
               PopupMenuItem(
-                value: KeySignature(key: key_sig.Key.c),
+                value: KeySignature(key: MusicalKey.c),
                 child: const Text('C Major'),
               ),
               PopupMenuItem(
-                value: KeySignature(key: key_sig.Key.bb),
+                value: KeySignature(key: MusicalKey.bb),
                 child: const Text('B♭ Major'),
               ),
               PopupMenuItem(
-                value: KeySignature(key: key_sig.Key.e),
+                value: KeySignature(key: MusicalKey.e),
                 child: const Text('E Major'),
               ),
               PopupMenuItem(
-                value: KeySignature(key: key_sig.Key.db),
+                value: KeySignature(key: MusicalKey.db),
                 child: const Text('D♭ Major'),
               ),
             ],
@@ -132,13 +155,11 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
 }
 
 // To use this example, add the following to your main.dart:
-/*
-import 'package:flutter/material.dart';
-import 'package:flutter_music_render/flutter_music_render.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter_music_render/flutter_music_render.dart';
 
-void main() {
-  runApp(const MaterialApp(
-    home: PianoKeyboardExample(),
-  ));
-}
-*/
+// void main() {
+//   runApp(const MaterialApp(
+//     home: PianoKeyboardExample(),
+//   ));
+// }

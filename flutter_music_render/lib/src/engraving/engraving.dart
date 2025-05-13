@@ -120,8 +120,8 @@ class EngravingStyle {
 
   // Clef positions (MuseScore values)
   static const Map<Clef, double> clefYPositions = {
-    Clef.treble: 1.0, // G clef centered on first line (was 2.0)
-    Clef.bass: -1.0, // F clef centered on third line from bottom (was 0.0)
+    Clef.treble: 0.6, // G clef centered on first line (was 2.0)
+    Clef.bass: -1.5, // F clef centered on third line from bottom (was 0.0)
     Clef.alto: 1.75, // C clef centered slightly above C line (was 2.75)
     Clef.tenor: 1.75, // C clef centered slightly above C line (was 2.75)
   };

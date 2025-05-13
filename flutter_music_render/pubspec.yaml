@@ -17,4 +17,7 @@ dev_dependencies:
   flutter_lints: ^2.0.0
 
 flutter:
-  # This package doesn't use any assets or fonts 
+  fonts:
+    - family: Bravura
+      fonts:
+        - asset: assets/fonts/Bravura.otf

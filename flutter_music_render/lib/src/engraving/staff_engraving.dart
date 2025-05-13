@@ -181,69 +181,33 @@ class StaffEngraving {
         size.width - startX - EngravingStyle.staffMargin * spatium;
     final noteSpacing = availableWidth / (notes.length + 1);
 
-    // Debug staff line positions - now correctly labeled for staff lines 0-4
-    print('DRAW: Staff line positions:');
-    print('DRAW: Top line (0): ${staffTop + 0 * spatium}');
-    print('DRAW: Second line (1): ${staffTop + 1 * spatium}');
-    print('DRAW: Middle line (2): ${staffTop + 2 * spatium}');
-    print('DRAW: Fourth line (3): ${staffTop + 3 * spatium}');
-    print('DRAW: Bottom line (4): ${staffTop + 4 * spatium}');
-
     double currentX = startX;
+    final previousNotes = <Note>[];
+
+    // Initialize key signature state
+    keySignature.initializeNoteState();
 
     for (final note in positionedNotes) {
       print('DRAW: Note MIDI ${note.midiPitch} at X: $currentX');
 
-      // Get staff line from the note (follows MuseScore convention)
+      // Calculate staff line position
       final staffLine = note.staffLine;
-      print('DRAW: Staff line position: $staffLine');
-
-      // Calculate Y position - this is critical to get right
-      // Staff lines are numbered from top to bottom:
-      // 0.0 = top line
-      // 1.0 = second line from top
-      // 2.0 = middle line
-      // 3.0 = fourth line from top (second from bottom)
-      // 4.0 = bottom line
-      final y = staffTop + staffLine * spatium;
-      print('DRAW: Y position: $y');
+      print('DRAW: Staff line: $staffLine');
 
       // Draw ledger lines if needed
-      if (staffModel.needsLedgerLine(staffLine)) {
+      if (staffLine < 0 || staffLine > 4) {
         drawLedgerLines(
             canvas, staffModel, staffLine, currentX, staffTop, spatium,
             clef: clef, midiPitch: note.midiPitch);
       }
 
-      // Get note symbol
-      String noteSymbol;
-      switch (note.duration) {
-        case NoteDuration.whole:
-          noteSymbol = '\uE1D2'; // Bravura whole note
-          break;
-        case NoteDuration.half:
-          noteSymbol = '\uE1D3'; // Bravura half note
-          break;
-        case NoteDuration.quarter:
-          noteSymbol = '\uE1D5'; // Bravura quarter note
-          break;
-        case NoteDuration.eighth:
-          noteSymbol = '\uE1D7'; // Bravura eighth note
-          break;
-        case NoteDuration.sixteenth:
-          noteSymbol = '\uE1D9'; // Bravura sixteenth note
-          break;
-        default:
-          noteSymbol = '\uE1D5'; // Default to quarter note
-      }
-
       // Draw the note
       final textPainter = TextPainter(
         text: TextSpan(
-          text: noteSymbol,
+          text: '\uE1D5', // Quarter note symbol
           style: TextStyle(
             fontFamily: 'Bravura',
-            fontSize: spatium * 5.0 * 0.95, // 5% smaller
+            fontSize: spatium * 5.0,
             color: Colors.black,
           ),
         ),
@@ -251,48 +215,69 @@ class StaffEngraving {
       );
       textPainter.layout();
 
-      print('DRAW: Text painter height: ${textPainter.height}');
-
       // Calculate proper note positioning
-      // Center the note horizontally
       final xOffset = currentX - (textPainter.width / 2);
-
-      // Calculate the base Y position
       final baseYPosition = staffTop + (staffLine * spatium);
-
-      // Apply the optical center offset
-      final opticalCenterRatio = 0.5; // 50% - center of note head
+      final opticalCenterRatio = 0.5;
       final verticalOffset = textPainter.height * opticalCenterRatio;
       final yOffset = baseYPosition - verticalOffset;
-
-      // Debug information
-      print('DRAW: Note MIDI ${note.midiPitch} placed at ($xOffset, $yOffset)');
-      print('DRAW: Original staff line: ${staffLine}, Corrected: $staffLine');
-      print('DRAW: Y position: $baseYPosition');
-      print(
-          'DRAW: Text height: ${textPainter.height}, Optical center: $verticalOffset');
-      print('DRAW: Final position: $yOffset');
 
       // Draw the note at the calculated position
       textPainter.paint(canvas, Offset(xOffset, yOffset));
 
+      // Determine if we need to show an accidental
+      bool needsAccidental = false;
+      AccidentalType accidentalToShow = note.accidentalType;
+
+      // First check if the note is in the key signature
+      if (keySignature.isNoteInKeySignature(note)) {
+        // If note matches key signature, no accidental needed
+        if (note.accidentalType ==
+            keySignature.getKeySignatureAccidental(note)) {
+          needsAccidental = false;
+        } else {
+          // If note is different from key signature, show appropriate accidental
+          needsAccidental = true;
+          accidentalToShow = note.accidentalType;
+        }
+      }
+      // If not in key signature, check other cases
+      else if (note.accidentalType != AccidentalType.none) {
+        needsAccidental = true;
+        accidentalToShow = note.accidentalType;
+      }
+      // Check if note needs a natural sign after being altered
+      else if (keySignature.needsAccidental(note, previousNotes)) {
+        needsAccidental = true;
+        // If the note is in the key signature or was previously altered, show natural
+        if (keySignature.getAccidentalsInKey().contains(note.pitchClass) ||
+            (previousNotes.isNotEmpty &&
+                previousNotes.last.accidentalType != AccidentalType.none)) {
+          accidentalToShow = AccidentalType.natural;
+        }
+      }
+
       // Draw accidental if needed
-      if (keySignature.needsAccidental(note)) {
-        drawAccidental(
-            canvas,
-            note.accidentalType,
-            xOffset -
-                (spatium * 1.2), // Position to left of note with proper spacing
-            yOffset, // Use the same y position as the note head
-            spatium,
+      if (needsAccidental) {
+        print(
+            'DRAW: Drawing accidental ${accidentalToShow} for note ${note.getNoteName()}');
+        drawAccidental(canvas, accidentalToShow, xOffset - (spatium * 1.2),
+            yOffset, spatium,
             staffLine: staffLine,
             staffTop: staffTop,
             midiPitch: note.midiPitch,
             clef: clef);
       }
 
+      // Update key signature state
+      keySignature.updateNoteState(note);
+
       currentX += noteSpacing;
+      previousNotes.add(note);
     }
+
+    // Clear tied notes state after drawing
+    keySignature.clearTiedNotes();
   }
 
   /// Draw ledger lines for a note
@@ -423,12 +408,49 @@ class StaffEngraving {
     if (staffLine != null && staffTop != null) {
       // Center the accidental vertically with the note head
       final baseY = staffTop + staffLine * spatium;
-      final verticalOffset = textPainter.height * 0.5; // Center vertically
+
+      // Adjust vertical position based on accidental type
+      double verticalOffset;
+      switch (accidentalType) {
+        case AccidentalType.sharp:
+          verticalOffset =
+              textPainter.height * 0.45; // Slightly higher for sharps
+          break;
+        case AccidentalType.flat:
+          verticalOffset =
+              textPainter.height * 0.55; // Slightly lower for flats
+          break;
+        case AccidentalType.natural:
+          verticalOffset = textPainter.height * 0.5; // Centered for naturals
+          break;
+        case AccidentalType.doubleSharp:
+          verticalOffset = textPainter.height * 0.45; // Same as sharp
+          break;
+        case AccidentalType.doubleFlat:
+          verticalOffset = textPainter.height * 0.55; // Same as flat
+          break;
+        default:
+          verticalOffset = textPainter.height * 0.5;
+      }
+
       yOffset = baseY - verticalOffset;
+
+      // Add small adjustment for ledger lines
+      if (staffLine < 0 || staffLine > 4) {
+        yOffset += spatium * 0.1; // Slight upward adjustment for ledger lines
+      }
     } else {
       yOffset = y;
     }
 
+    // Draw the accidental
     textPainter.paint(canvas, Offset(x, yOffset));
+
+    // Debug information
+    print('DRAW: Drawing accidental $symbol at ($x, $yOffset)');
+    print('DRAW: Accidental height: ${textPainter.height}');
+    if (staffLine != null) {
+      print('DRAW: Staff line: $staffLine');
+    }
   }
 }

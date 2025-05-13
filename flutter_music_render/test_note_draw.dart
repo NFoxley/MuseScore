@@ -5,6 +5,7 @@ import 'package:flutter_music_render/src/engraving/clef.dart';
 import 'package:flutter_music_render/src/engraving/staff_model.dart';
 import 'package:flutter_music_render/src/engraving/note.dart';
 import 'package:flutter_music_render/src/engraving/key_signature.dart' as music;
+import 'package:flutter_music_render/src/engraving/musical_key.dart' as music;
 import 'package:flutter_music_render/src/engraving/time_signature.dart';
 import 'package:flutter_music_render/src/engraving/engraving_utils.dart';
 
@@ -88,7 +89,7 @@ class NotePainter extends CustomPainter {
     final staffModel = StaffModel(clef: Clef.treble);
 
     // Test key signature positions
-    final keySignature = music.KeySignature(key: music.Key.g);
+    final keySignature = music.KeySignature(key: music.MusicalKey.g);
     final positions =
         EngravingUtils.getKeySignaturePositions(keySignature, Clef.treble);
 
@@ -121,7 +122,7 @@ class NotePainter extends CustomPainter {
     }
 
     // Test flats in bass clef
-    final flatKeySignature = music.KeySignature(key: music.Key.bb);
+    final flatKeySignature = music.KeySignature(key: music.MusicalKey.bb);
     final flatPositions =
         EngravingUtils.getKeySignaturePositions(flatKeySignature, Clef.bass);
 
