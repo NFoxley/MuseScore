@@ -44,10 +44,10 @@ class PianoKeyboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (startOctave, endOctave) = _getOctaveRange();
-    final whiteKeyWidth = 48.0;
-    final blackKeyWidth = 32.0;
-    final whiteKeyHeight = 200.0;
-    final blackKeyHeight = 120.0;
+    const whiteKeyWidth = 48.0;
+    const blackKeyWidth = 32.0;
+    const whiteKeyHeight = 200.0;
+    const blackKeyHeight = 120.0;
 
     // Calculate total width needed
     final totalWhiteKeys = (endOctave - startOctave + 1) * 7;
@@ -101,8 +101,9 @@ class PianoKeyboard extends StatelessWidget {
                           _getNoteLabel(midiPitch),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            fontSize: 10,
+                            fontSize: 14,
                             color: Colors.black,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -156,9 +157,9 @@ class PianoKeyboard extends StatelessWidget {
                           onNoteSelected(note);
                         },
                         child: Container(
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: Colors.black,
-                            borderRadius: const BorderRadius.vertical(
+                            borderRadius: BorderRadius.vertical(
                               bottom: Radius.circular(4),
                             ),
                           ),
@@ -172,8 +173,9 @@ class PianoKeyboard extends StatelessWidget {
                           _getNoteLabel(midiPitch),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            fontSize: 10,
+                            fontSize: 14,
                             color: Colors.white,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),

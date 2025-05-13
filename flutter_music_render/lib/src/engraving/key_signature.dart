@@ -117,69 +117,13 @@ class KeySignature {
     alteredNotesInMeasure.clear();
   }
 
-  /// Determines if a note needs an accidental based on key signature and previous notes
-  bool needsAccidental(Note note, List<Note> previousNotes) {
+  /// Get the current state of a note
+  AccidentalType getNoteState(Note note) {
     // Initialize state if not done
     if (noteState.isEmpty) {
       initializeNoteState();
     }
-
-    // Get note name based on the actual accidental type
-    final noteName =
-        note.getNoteName(useFlats: note.accidentalType == AccidentalType.flat);
-    final baseNote = noteName[0];
-
-    print(
-        '\nChecking accidental for note: ${noteName} (MIDI: ${note.midiPitch})');
-    print(
-        'Previous notes: ${previousNotes.map((n) => n.getNoteName(useFlats: n.accidentalType == AccidentalType.flat)).join(", ")}');
-    print('Is in key signature: ${isNoteInKeySignature(note)}');
-    print('Current state: ${noteState[note.pitchClass]}');
-    print('Altered notes in measure: ${alteredNotesInMeasure.keys.join(", ")}');
-
-    // If note is in key signature and matches the key signature accidental
-    if (isNoteInKeySignature(note)) {
-      print('Note matches key signature, no accidental needed');
-      return false;
-    }
-
-    // If note is tied, show accidental
-    if (tiedNotes.contains(note.midiPitch)) {
-      print('Note is tied, showing accidental');
-      return true;
-    }
-
-    // Check if this base note was altered earlier in the measure
-    if (alteredNotesInMeasure.containsKey(baseNote)) {
-      final currentState = alteredNotesInMeasure[baseNote];
-      // Only show accidental if it's different from the current state
-      if (note.accidentalType != currentState) {
-        print(
-            'Note was altered earlier in measure and needs different accidental');
-        return true;
-      }
-      print('Note was altered earlier in measure but matches current state');
-      return false;
-    }
-
-    // If note is not in key signature, we need to show its accidental
-    // This includes natural signs for notes that would otherwise be sharp/flat in the key
-    final keyAccidentals = isSharp ? sharpOrder : flatOrder;
-    final count = accidentalCount();
-    if (keyAccidentals.sublist(0, count).contains(baseNote)) {
-      // This note is in the key signature but with a different accidental
-      print('Note is in key signature but with different accidental');
-      return true;
-    }
-
-    // If note has an explicit accidental, show it
-    if (note.accidentalType != AccidentalType.none) {
-      print('Note has explicit accidental');
-      return true;
-    }
-
-    print('No accidental needed');
-    return false;
+    return noteState[note.pitchClass] ?? AccidentalType.none;
   }
 
   /// Updates the note state after a note is played
@@ -194,41 +138,105 @@ class KeySignature {
     final baseNote = noteName[0];
 
     print('\nUpdating state for note: ${noteName} (MIDI: ${note.midiPitch})');
-    print('Is in key signature: ${isNoteInKeySignature(note)}');
 
-    // If note is in key signature and matches the key signature accidental,
-    // treat it as if it has no explicit accidental
-    if (isNoteInKeySignature(note)) {
-      final keyAccidental =
-          isSharp ? AccidentalType.sharp : AccidentalType.flat;
-      noteState[note.pitchClass] = keyAccidental;
-      print('Note is in key signature and matches key signature accidental');
-      lastOctave[note.pitchClass] = note.midiPitch ~/ 12;
-      return;
-    }
+    // Check if this note's base name is in the key signature
+    final keyAccidentals = isSharp ? sharpOrder : flatOrder;
+    final count = accidentalCount();
+    final isBaseNoteInKey = keyAccidentals.sublist(0, count).contains(baseNote);
+    print('Base note $baseNote is in key signature: $isBaseNoteInKey');
 
-    // Update state with the actual accidental type of the note
-    if (note.accidentalType != AccidentalType.none) {
-      // If note has an explicit accidental, use that
-      noteState[note.pitchClass] = note.accidentalType;
-      // Mark as altered in measure with base note name (without octave)
-      alteredNotesInMeasure[baseNote] = note.accidentalType;
-      print('Note has explicit accidental: ${note.accidentalType}');
-      print('Marked as altered in measure: $baseNote');
-    } else {
-      // If note is natural, check if it's in the key signature
-      if (isNoteInKeySignature(note)) {
-        noteState[note.pitchClass] =
-            isSharp ? AccidentalType.sharp : AccidentalType.flat;
-        print('Note is in key signature, set to ${isSharp ? "sharp" : "flat"}');
+    // Track the current state of this note in the measure
+    if (isBaseNoteInKey) {
+      // If the note is in the key signature (has the key's sharp/flat)
+      if (note.accidentalType ==
+          (isSharp ? AccidentalType.sharp : AccidentalType.flat)) {
+        noteState[note.pitchClass] = note.accidentalType;
+        print('Note matches key signature');
       } else {
-        noteState[note.pitchClass] = AccidentalType.none;
-        print('Note is not in key signature, set to natural');
+        // If the note has a different accidental than the key signature
+        noteState[note.pitchClass] = note.accidentalType;
+        alteredNotesInMeasure[baseNote] = note.accidentalType;
+        print('Note deviates from key signature, marked as altered');
+      }
+    } else {
+      // If the note is not in the key signature
+      noteState[note.pitchClass] = note.accidentalType;
+      if (note.accidentalType != AccidentalType.none) {
+        alteredNotesInMeasure[baseNote] = note.accidentalType;
+        print('Note has explicit accidental, marked as altered');
       }
     }
 
     // Update last octave
     lastOctave[note.pitchClass] = note.midiPitch ~/ 12;
+  }
+
+  /// Check if a note needs an accidental
+  bool needsAccidental(Note note, List<Note> previousNotes) {
+    print(
+        '\nChecking accidental for note: ${note.getNoteName()} (MIDI: ${note.midiPitch})');
+    print(
+        'Previous notes: ${previousNotes.map((n) => n.getNoteName()).join(', ')}');
+
+    // Get the base note name
+    final noteName =
+        note.getNoteName(useFlats: note.accidentalType == AccidentalType.flat);
+    final baseNote = noteName[0];
+
+    // Check if this note's base name is in the key signature
+    final keyAccidentals = isSharp ? sharpOrder : flatOrder;
+    final count = accidentalCount();
+    final isBaseNoteInKey = keyAccidentals.sublist(0, count).contains(baseNote);
+    print('Base note $baseNote is in key signature: $isBaseNoteInKey');
+
+    // Get the current state of the note
+    AccidentalType currentState = getNoteState(note);
+    print('Current state: $currentState');
+
+    // Check if any previous note of the same pitch class was altered
+    bool wasAlteredEarlier = false;
+    AccidentalType previousAccidental = AccidentalType.none;
+    for (final prevNote in previousNotes) {
+      final prevNoteName = prevNote.getNoteName(
+          useFlats: prevNote.accidentalType == AccidentalType.flat);
+      final prevBaseNote = prevNoteName[0];
+      if (prevBaseNote == baseNote &&
+          prevNote.accidentalType != AccidentalType.none) {
+        wasAlteredEarlier = true;
+        previousAccidental = prevNote.accidentalType;
+        print(
+            'Note was altered earlier in measure by $prevNoteName with ${prevNote.accidentalType}');
+        break;
+      }
+    }
+
+    // If the note has an explicit accidental, show it
+    if (note.accidentalType != AccidentalType.none) {
+      print('Note has explicit accidental');
+      return true;
+    }
+
+    // If the note was altered earlier in the measure and is now natural, show natural
+    if (wasAlteredEarlier && note.accidentalType == AccidentalType.none) {
+      print(
+          'Note was altered earlier in measure and is now natural, needs natural sign');
+      return true;
+    }
+
+    // If the note is in the key signature but was altered earlier, show the key signature accidental
+    if (isBaseNoteInKey && wasAlteredEarlier) {
+      print(
+          'Note is in key signature but was altered earlier, needs key signature accidental');
+      return true;
+    }
+
+    // If the note is natural but its base note is in the key signature
+    if (isBaseNoteInKey && note.accidentalType == AccidentalType.none) {
+      print('Note is natural but its base note is in key signature');
+      return true;
+    }
+
+    return false;
   }
 
   /// Marks a note as tied

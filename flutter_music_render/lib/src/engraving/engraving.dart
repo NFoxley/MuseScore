@@ -129,7 +129,7 @@ class EngravingStyle {
   // Key signature positions
   static const Map<Clef, double> keysigYPositions = {
     Clef.treble: 2.0, // Aligned with treble clef
-    Clef.bass: 4.0, // Aligned with bass clef
+    Clef.bass: 3.0, // Aligned with bass clef
     Clef.alto: 3.0, // Aligned with alto clef
     Clef.tenor: 3.0, // Aligned with tenor clef
   };

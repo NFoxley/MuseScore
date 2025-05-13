@@ -85,7 +85,11 @@ class StaffEngraving {
 
       for (final position in positions) {
         final symbolX = currentX;
-        final symbolY = staffTop + (position.y * spatium);
+        // Adjust vertical position: sharps slightly lower, flats slightly higher
+        final verticalAdjustment =
+            isSharp ? 0.1 : -0.1; // Adjust by 10% of spatium
+        final symbolY =
+            staffTop + ((position.y + verticalAdjustment) * spatium);
         print('Drawing $symbol at ($symbolX, $symbolY)');
 
         // Draw the accidental
@@ -229,31 +233,81 @@ class StaffEngraving {
       bool needsAccidental = false;
       AccidentalType accidentalToShow = note.accidentalType;
 
-      // First check if the note is in the key signature
-      if (keySignature.isNoteInKeySignature(note)) {
-        // If note matches key signature, no accidental needed
-        if (note.accidentalType ==
-            keySignature.getKeySignatureAccidental(note)) {
-          needsAccidental = false;
+      // Get the base note name and full note name with accidental
+      final noteName = note.getNoteName(
+          useFlats: note.accidentalType == AccidentalType.flat);
+      final baseNote = noteName[0];
+      final fullNoteName =
+          noteName.replaceAll(RegExp(r'[0-9]'), ''); // Remove octave number
+
+      // Check if this note is in the key signature
+      final keyAccidentals = keySignature.isSharp
+          ? KeySignature.sharpOrder
+          : KeySignature.flatOrder;
+      final count = keySignature.accidentalCount();
+      final isBaseNoteInKey =
+          keyAccidentals.sublist(0, count).contains(baseNote);
+
+      // Get the key signature accidental type for this note
+      final keyAccidentalType = isBaseNoteInKey
+          ? (keySignature.isSharp ? AccidentalType.sharp : AccidentalType.flat)
+          : AccidentalType.none;
+
+      // A note is in the key signature if its base note is in the key AND it has the key's accidental type
+      final isInKeySignature =
+          isBaseNoteInKey && note.accidentalType == keyAccidentalType;
+
+      print('\nChecking accidental for note: $fullNoteName');
+      print(
+          'Note in key signature: ${isInKeySignature ? "$baseNote${keySignature.isSharp ? "♯" : "♭"}" : "No"}');
+
+      // Check if any previous note of the same pitch class was altered
+      bool wasAlteredEarlier = false;
+      AccidentalType previousAccidental = AccidentalType.none;
+      for (final prevNote in previousNotes) {
+        final prevNoteName = prevNote.getNoteName(
+            useFlats: prevNote.accidentalType == AccidentalType.flat);
+        final prevBaseNote = prevNoteName[0];
+        if (prevBaseNote == baseNote) {
+          wasAlteredEarlier = true;
+          previousAccidental = prevNote.accidentalType;
+          print(
+              'Note was altered earlier by $prevNoteName with ${prevNote.accidentalType}');
+          break;
+        }
+      }
+
+      // If the note is in the key signature
+      if (isBaseNoteInKey) {
+        // If note matches key signature
+        if (note.accidentalType == keyAccidentalType) {
+          // Show accidental if it was altered earlier
+          needsAccidental = wasAlteredEarlier;
+          accidentalToShow = note.accidentalType;
+          print(
+              'Note matches key signature${wasAlteredEarlier ? " but was altered earlier" : ""}');
         } else {
           // If note is different from key signature, show appropriate accidental
           needsAccidental = true;
-          accidentalToShow = note.accidentalType;
+          accidentalToShow = note.accidentalType == AccidentalType.none
+              ? AccidentalType.natural
+              : note.accidentalType;
+          print('Note differs from key signature, showing ${accidentalToShow}');
         }
       }
-      // If not in key signature, check other cases
-      else if (note.accidentalType != AccidentalType.none) {
-        needsAccidental = true;
-        accidentalToShow = note.accidentalType;
-      }
-      // Check if note needs a natural sign after being altered
-      else if (keySignature.needsAccidental(note, previousNotes)) {
-        needsAccidental = true;
-        // If the note is in the key signature or was previously altered, show natural
-        if (keySignature.getAccidentalsInKey().contains(note.pitchClass) ||
-            (previousNotes.isNotEmpty &&
-                previousNotes.last.accidentalType != AccidentalType.none)) {
+      // If not in key signature
+      else {
+        // If note has an explicit accidental, show it
+        if (note.accidentalType != AccidentalType.none) {
+          needsAccidental = true;
+          accidentalToShow = note.accidentalType;
+          print('Note has explicit accidental ${accidentalToShow}');
+        }
+        // If note was altered earlier and is now natural, show natural
+        else if (wasAlteredEarlier) {
+          needsAccidental = true;
           accidentalToShow = AccidentalType.natural;
+          print('Note was altered earlier, showing natural');
         }
       }
 
