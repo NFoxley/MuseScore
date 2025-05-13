@@ -390,12 +390,19 @@ class StaffEngraving {
         return; // No accidental to draw
     }
 
+    // Calculate font size based on accidental type
+    double fontSize = spatium * 3.15; // Base size for most accidentals
+    if (accidentalType == AccidentalType.flat ||
+        accidentalType == AccidentalType.doubleFlat) {
+      fontSize *= 0.82; // Reduce flat accidentals by 1/3
+    }
+
     final textPainter = TextPainter(
       text: TextSpan(
         text: symbol,
         style: TextStyle(
           fontFamily: 'Bravura',
-          fontSize: spatium * 3.15, // 10% smaller than before (3.5 * 0.9)
+          fontSize: fontSize,
           color: Colors.black,
         ),
       ),
@@ -414,14 +421,14 @@ class StaffEngraving {
       switch (accidentalType) {
         case AccidentalType.sharp:
           verticalOffset =
-              textPainter.height * 0.45; // Slightly higher for sharps
+              textPainter.height * 0.47; // Slightly higher for sharps
           break;
         case AccidentalType.flat:
           verticalOffset =
-              textPainter.height * 0.55; // Slightly lower for flats
+              textPainter.height * 0.58; // Slightly lower for flats
           break;
         case AccidentalType.natural:
-          verticalOffset = textPainter.height * 0.5; // Centered for naturals
+          verticalOffset = textPainter.height * 0.47; // Centered for naturals
           break;
         case AccidentalType.doubleSharp:
           verticalOffset = textPainter.height * 0.45; // Same as sharp
@@ -433,7 +440,9 @@ class StaffEngraving {
           verticalOffset = textPainter.height * 0.5;
       }
 
-      yOffset = baseY - verticalOffset;
+      yOffset = baseY -
+          verticalOffset -
+          (spatium * 0.4); // Move up by 0.3 staff lines
 
       // Add small adjustment for ledger lines
       if (staffLine < 0 || staffLine > 4) {
