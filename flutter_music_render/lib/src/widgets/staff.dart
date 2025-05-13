@@ -154,40 +154,7 @@ class StaffPainter extends CustomPainter {
       clef,
       keySignature,
       timeSignature,
-      spatium: spatium,
-    );
-
-    // Calculate the starting X position for notes
-    final clefStyle = TextStyle(
-      fontFamily: 'Bravura',
-      fontSize: spatium * 4,
-      color: Colors.black,
-    );
-    final clefSymbol = StaffEngraving.getClefSymbol(clef);
-    final clefTextPainter = TextPainter(
-      text: TextSpan(text: clefSymbol, style: clefStyle),
-      textDirection: TextDirection.ltr,
-    );
-    clefTextPainter.layout();
-
-    final startX = EngravingStyle.staffMargin * spatium +
-        clefTextPainter.width +
-        EngravingStyle.clefMargin * spatium +
-        (keySignature.accidentals *
-            EngravingStyle.keysigAccidentalDistance *
-            spatium) +
-        (timeSignature != null
-            ? EngravingStyle.keysigMargin * spatium + spatium * 2
-            : 0);
-
-    // Draw notes
-    StaffEngraving.drawNotes(
-      canvas,
-      size,
       notes,
-      clef,
-      keySignature,
-      startX,
       spatium: spatium,
     );
   }

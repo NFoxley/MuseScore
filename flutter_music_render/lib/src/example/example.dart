@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_music_render/flutter_music_render.dart';
+import 'package:flutter_music_render/src/engraving/key_signature.dart'
+    as key_sig;
 
 /// A simple example that demonstrates the piano keyboard and staff widgets.
 /// Copy and paste this entire file into your Flutter app to get started.
@@ -18,7 +20,7 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
       linePosition: 0,
     ),
     Note(
-      midiPitch: 57, // A3
+      midiPitch: 60, // C4
       duration: NoteDuration.quarter,
       linePosition: 0,
     ),
@@ -26,7 +28,7 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
 
   Clef _clef = Clef.treble;
   bool _useFlats = false;
-  final KeySignature _keySignature = KeySignature(0, isSharp: true);
+  KeySignature _keySignature = KeySignature(key: key_sig.Key.c);
   final TimeSignature _timeSignature = TimeSignature(4, 4);
 
   void _handleNoteSelected(Note note) {
@@ -53,6 +55,12 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
     });
   }
 
+  void _changeKeySignature(KeySignature key) {
+    setState(() {
+      _keySignature = key;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,6 +76,29 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
             icon: Text(_useFlats ? '♭' : '♯'),
             onPressed: _toggleAccidentals,
             tooltip: 'Toggle Accidentals',
+          ),
+          PopupMenuButton<KeySignature>(
+            icon: const Icon(Icons.music_note),
+            tooltip: 'Select Key Signature',
+            onSelected: _changeKeySignature,
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: KeySignature(key: key_sig.Key.c),
+                child: const Text('C Major'),
+              ),
+              PopupMenuItem(
+                value: KeySignature(key: key_sig.Key.bb),
+                child: const Text('B♭ Major'),
+              ),
+              PopupMenuItem(
+                value: KeySignature(key: key_sig.Key.e),
+                child: const Text('E Major'),
+              ),
+              PopupMenuItem(
+                value: KeySignature(key: key_sig.Key.db),
+                child: const Text('D♭ Major'),
+              ),
+            ],
           ),
         ],
       ),

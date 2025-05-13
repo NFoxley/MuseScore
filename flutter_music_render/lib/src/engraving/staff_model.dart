@@ -48,13 +48,23 @@ class StaffModel {
     55: 1.0, // G3 is top space
     57: 0.5, // A3 is top line
     59: 0.0, // B3 is space above staff
-    60: -0.5, // C4 (middle C) is 2nd ledger line above staff
+    60: -0.5, // C4 (middle C) is 1st ledger line above staff
   };
 
   // Special mapping for enharmonic notes
   // Maps MIDI pitch to staff line positions based on accidental type
   // This allows D# and Eb (both MIDI 63) to be drawn at different positions
   static const Map<int, Map<AccidentalType, double>> _enharmonicPositions = {
+    // MIDI 40: C#2/Db2
+    37: {
+      AccidentalType.sharp: 6.5, // C#4 - same line as C4
+      AccidentalType.flat: 6.0, // Db4 - same line as D4
+    },
+    // MIDI 40: C#2/Db2
+    39: {
+      AccidentalType.sharp: 6.0, // D#2 - same line as C4
+      AccidentalType.flat: 5.5, // Eb2 - same line as D4
+    },
     // MIDI 42: F#2/Gb2
     42: {
       AccidentalType.sharp: 5.0, // C#4 - same line as C4
@@ -299,33 +309,41 @@ class StaffModel {
   List<double> getLedgerLines(double staffLine) {
     List<double> ledgerLines = [];
 
-    // Only draw ledger lines at integer positions (lines)
-
     // For notes above the staff (staff line values less than 0)
     if (staffLine < 0) {
-      // Only draw ledger lines at integer positions up to the note's position
-      // Start at the first ledger line above staff (-1) and go up until we reach the note's line
-      for (int line = -1; line >= staffLine.floor(); line--) {
-        // Only add ledger lines for exact positions where the note sits
-        if (line == staffLine.floor() && staffLine != line.toDouble()) {
-          // If note is in a space, don't add a ledger line for the line below it
-          continue;
+      // For A5 (staffLine = -0.5), add ledger line at -1
+      if (staffLine == -1.0 || staffLine == -0.5) {
+        ledgerLines.add(-1.0);
+      }
+      // For C6 (staffLine = -1.5), add ledger lines at -1 and -3
+      else if (staffLine >= -1.5) {
+        ledgerLines.add(-1.0);
+        ledgerLines.add(-2.0);
+      }
+      // For higher notes, add all ledger lines up to the note
+      else {
+        for (int line = -1; line >= staffLine.floor(); line -= 2) {
+          ledgerLines.add(line.toDouble());
         }
-        ledgerLines.add(line.toDouble());
       }
     }
 
     // For notes below the staff (staff line values greater than 4)
-    if (staffLine > 4) {
-      // Only draw ledger lines at integer positions up to the note's position
-      // Start at the first ledger line below staff (5) and go down until we reach the note's line
-      for (int line = 5; line <= staffLine.ceil(); line++) {
-        // Only add ledger lines for exact positions where the note sits
-        if (line == staffLine.ceil() && staffLine != line.toDouble()) {
-          // If note is in a space, don't add a ledger line for the line above it
-          continue;
+    if (staffLine >= 5.5) {
+      // For E2 (staffLine = 5.5), add ledger line at 5
+      if (staffLine == 5.5 || staffLine == 6.0) {
+        ledgerLines.add(5.0);
+      }
+      // For C2 (staffLine = 6.5), add ledger lines at 5 and 7
+      else if (staffLine == 6.5) {
+        ledgerLines.add(5.0);
+        ledgerLines.add(6.0);
+      }
+      // For lower notes, add all ledger lines up to the note
+      else {
+        for (int line = 5; line <= staffLine.ceil(); line += 2) {
+          ledgerLines.add(line.toDouble());
         }
-        ledgerLines.add(line.toDouble());
       }
     }
 

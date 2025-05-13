@@ -1,11 +1,12 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'lib/src/engraving/clef.dart';
-import 'lib/src/engraving/staff_model.dart';
-import 'lib/src/engraving/note.dart';
-import 'lib/src/engraving/key_signature.dart';
-import 'lib/src/engraving/time_signature.dart';
+import 'package:flutter_music_render/src/engraving/clef.dart';
+import 'package:flutter_music_render/src/engraving/staff_model.dart';
+import 'package:flutter_music_render/src/engraving/note.dart';
+import 'package:flutter_music_render/src/engraving/key_signature.dart' as music;
+import 'package:flutter_music_render/src/engraving/time_signature.dart';
+import 'package:flutter_music_render/src/engraving/engraving_utils.dart';
 
 void main() {
   runApp(const TestApp());
@@ -86,6 +87,71 @@ class NotePainter extends CustomPainter {
     // Create a StaffModel for testing
     final staffModel = StaffModel(clef: Clef.treble);
 
+    // Test key signature positions
+    final keySignature = music.KeySignature(key: music.Key.g);
+    final positions =
+        EngravingUtils.getKeySignaturePositions(keySignature, Clef.treble);
+
+    // Draw key signature positions
+    var x = 100.0;
+    for (final position in positions) {
+      final y = staffTop + position.y * spatium;
+
+      // Draw position indicator
+      canvas.drawLine(
+        Offset(x - 20, y),
+        Offset(x + 20, y),
+        Paint()
+          ..color = Colors.green
+          ..strokeWidth = 2.0,
+      );
+
+      // Draw debug info
+      final debugPainter = TextPainter(
+        text: TextSpan(
+          text: '${position.note}♯\nY: ${position.y}',
+          style: const TextStyle(color: Colors.green, fontSize: 10),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      debugPainter.layout();
+      debugPainter.paint(canvas, Offset(x - 30, y + 30));
+
+      x += 30;
+    }
+
+    // Test flats in bass clef
+    final flatKeySignature = music.KeySignature(key: music.Key.bb);
+    final flatPositions =
+        EngravingUtils.getKeySignaturePositions(flatKeySignature, Clef.bass);
+
+    x = 100.0;
+    for (final position in flatPositions) {
+      final y = staffTop + position.y * spatium;
+
+      // Draw position indicator
+      canvas.drawLine(
+        Offset(x - 20, y),
+        Offset(x + 20, y),
+        Paint()
+          ..color = Colors.blue
+          ..strokeWidth = 2.0,
+      );
+
+      // Draw debug info
+      final debugPainter = TextPainter(
+        text: TextSpan(
+          text: '${position.note}♭\nY: ${position.y}',
+          style: const TextStyle(color: Colors.blue, fontSize: 10),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      debugPainter.layout();
+      debugPainter.paint(canvas, Offset(x - 30, y + 30));
+
+      x += 30;
+    }
+
     // Test several notes at different positions
     final testNotes = [
       (60, 'C4'), // Should be on first ledger line below staff (staff line 5)
@@ -94,7 +160,7 @@ class NotePainter extends CustomPainter {
       (76, 'E5'), // Should be on top line (staff line -2)
     ];
 
-    var x = 100.0;
+    x = 300.0; // Move notes to the right of key signature
     final spacing = 100.0;
 
     // Draw a notehead at each position

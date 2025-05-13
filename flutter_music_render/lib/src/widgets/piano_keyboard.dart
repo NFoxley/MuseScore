@@ -210,10 +210,9 @@ class PianoKeyboard extends StatelessWidget {
     final whiteKeySemitones = [0, 2, 4, 5, 7, 9, 11];
     final semitoneIndex = semitone % 7;
 
-    // Correct calculation for octave
-    // In MIDI standard, C4 (Middle C) is 60, which means C0 is 12
-    // So, C(octave) = (octave + 1) * 12
-    final basePitch = (octave + 1) * 12;
+    // Calculate base pitch for the octave
+    // C4 (Middle C) is 60, so C3 is 48, C5 is 72, etc.
+    final basePitch = (octave * 12) + 12;
     final pitch = basePitch + whiteKeySemitones[semitoneIndex];
 
     print(

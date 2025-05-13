@@ -10,8 +10,8 @@ import 'clef.dart';
 import 'key_signature.dart';
 import 'time_signature.dart';
 import 'engraving.dart';
-import 'note_engraving.dart';
-import 'staff_model.dart' as staff_model;
+import 'note_engraving.dart' hide StaffModel;
+import 'staff_model.dart';
 
 /// Class for staff engraving
 class StaffEngraving {
@@ -21,7 +21,8 @@ class StaffEngraving {
     Size size,
     Clef clef,
     KeySignature keySignature,
-    TimeSignature? timeSignature, {
+    TimeSignature? timeSignature,
+    List<Note> notes, {
     required double spatium,
   }) {
     print('StaffEngraving: Drawing staff with spatium: $spatium');
@@ -51,59 +52,67 @@ class StaffEngraving {
     print('StaffEngraving: Bottom line (4): ${staffTop + 4 * spatium}');
 
     // Draw clef
+    final clefSymbol = getClefSymbol(clef);
     final clefStyle = TextStyle(
       fontFamily: 'Bravura',
-      fontSize: spatium * 4,
+      fontSize: spatium * 4.95, // Increased by 10% from 4.5 to 4.95
       color: Colors.black,
     );
-
-    final clefSymbol = getClefSymbol(clef);
-    print('StaffEngraving: Drawing clef $clef with symbol $clefSymbol');
     final clefTextPainter = TextPainter(
       text: TextSpan(text: clefSymbol, style: clefStyle),
       textDirection: TextDirection.ltr,
     );
     clefTextPainter.layout();
 
-    // Position clef according to MuseScore rules
-    final clefX = EngravingStyle.staffMargin * spatium;
+    var clefX = EngravingStyle.staffMargin * spatium;
+    // Position clef at the correct height based on clef type
     final clefY =
-        staffTop + (EngravingStyle.clefYPositions[clef]! - 2.5) * spatium;
-    print('StaffEngraving: Positioning clef at ($clefX, $clefY)');
+        staffTop + (EngravingStyle.clefYPositions[clef]! - 2.0) * spatium;
+    print('StaffEngraving: Drawing clef at ($clefX, $clefY)');
     clefTextPainter.paint(canvas, Offset(clefX, clefY));
 
     // Draw key signature
-    var currentX =
-        clefX + clefTextPainter.width + EngravingStyle.clefMargin * spatium;
-    print('StaffEngraving: Starting key signature at X: $currentX');
+    if (keySignature != null) {
+      final positions =
+          EngravingUtils.getKeySignaturePositions(keySignature, clef);
+      print(
+          'Drawing key signature: ${keySignature.isSharp ? "sharp" : "flat"} with ${positions.length} accidentals');
 
-    final keySignaturePositions =
-        EngravingUtils.getKeySignaturePositions(keySignature, clef);
-    final keySignatureSymbol = keySignature.isSharp ? '♯' : '♭';
-    final keySignatureStyle = TextStyle(
-      fontFamily: 'Bravura',
-      fontSize: spatium * 2,
-      color: Colors.black,
-    );
+      var currentX =
+          clefX + clefTextPainter.width + EngravingStyle.clefMargin * spatium;
+      final isSharp = keySignature.isSharp;
+      final symbol = isSharp ? '♯' : '♭';
 
-    for (final position in keySignaturePositions) {
-      final textPainter = TextPainter(
-        text: TextSpan(text: keySignatureSymbol, style: keySignatureStyle),
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
+      for (final position in positions) {
+        final symbolX = currentX;
+        final symbolY = staffTop + (position.y * spatium);
+        print('Drawing $symbol at ($symbolX, $symbolY)');
 
-      final x = currentX;
-      final y = staffTop + position.y * spatium;
-      print('StaffEngraving: Drawing key signature at ($x, $y)');
-      textPainter.paint(canvas, Offset(x, y));
+        // Draw the accidental
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: symbol,
+            style: TextStyle(
+              fontFamily: 'Bravura',
+              fontSize: spatium * 2.5,
+              color: Colors.black,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        );
+        textPainter.layout();
+        textPainter.paint(
+            canvas, Offset(symbolX, symbolY - textPainter.height));
 
-      currentX += EngravingStyle.keysigAccidentalDistance * spatium;
+        // Update x position for next accidental
+        currentX += EngravingStyle.keysigAccidentalDistance * spatium;
+      }
+      clefX = currentX;
     }
 
     // Draw time signature if needed
     if (timeSignature != null) {
-      final timeX = currentX + EngravingStyle.keysigMargin * spatium;
+      final timeX = clefX + EngravingStyle.clefMargin * spatium;
       final timeY = staffTop + 2.0 * spatium; // Center on staff
       print('StaffEngraving: Drawing time signature at ($timeX, $timeY)');
 
@@ -135,6 +144,14 @@ class StaffEngraving {
       denominatorPainter.layout();
       denominatorPainter.paint(canvas, Offset(timeX, timeY + spatium * 0.5));
     }
+
+    // Draw notes
+    if (notes.isNotEmpty) {
+      // Add extra margin after time signature or key signature
+      final startX = clefX + EngravingStyle.timesigMargin * spatium;
+      drawNotes(canvas, size, notes, clef, keySignature, startX,
+          spatium: spatium);
+    }
   }
 
   /// Draw notes on the staff
@@ -154,7 +171,7 @@ class StaffEngraving {
     print('DRAW: Size: $size');
 
     // Create a staff model to handle note positioning
-    final staffModel = staff_model.StaffModel(clef: clef);
+    final staffModel = StaffModel(clef: clef);
 
     // Position notes on the staff
     final positionedNotes = staffModel.positionNotes(notes);
@@ -192,11 +209,11 @@ class StaffEngraving {
       print('DRAW: Y position: $y');
 
       // Draw ledger lines if needed
-      // if (staffModel.needsLedgerLine(staffLine)) {
-      //   drawLedgerLines(canvas, staffModel as StaffModel, staffLine, currentX,
-      //       staffTop, spatium,
-      //       clef: clef, midiPitch: note.midiPitch);
-      // }
+      if (staffModel.needsLedgerLine(staffLine)) {
+        drawLedgerLines(
+            canvas, staffModel, staffLine, currentX, staffTop, spatium,
+            clef: clef, midiPitch: note.midiPitch);
+      }
 
       // Get note symbol
       String noteSymbol;
@@ -260,13 +277,13 @@ class StaffEngraving {
       textPainter.paint(canvas, Offset(xOffset, yOffset));
 
       // Draw accidental if needed
-      if (note.showAccidental && note.accidentalType != AccidentalType.none) {
+      if (keySignature.needsAccidental(note)) {
         drawAccidental(
             canvas,
             note.accidentalType,
             xOffset -
                 (spatium * 1.2), // Position to left of note with proper spacing
-            y, // Use the same y position as the note
+            yOffset, // Use the same y position as the note head
             spatium,
             staffLine: staffLine,
             staffTop: staffTop,
@@ -278,81 +295,34 @@ class StaffEngraving {
     }
   }
 
-  // /// Draw ledger lines for a note
-  // static void drawLedgerLines(Canvas canvas, StaffModel staffModel,
-  //     double staffLine, double noteX, double staffTop, double spatium,
-  //     {Clef? clef, int? midiPitch}) {
-  //   final paint = Paint()
-  //     ..color = Colors.black
-  //     ..strokeWidth = spatium * 0.1
-  //     ..style = PaintingStyle.stroke;
+  /// Draw ledger lines for a note
+  static void drawLedgerLines(Canvas canvas, StaffModel staffModel,
+      double staffLine, double noteX, double staffTop, double spatium,
+      {Clef? clef, int? midiPitch}) {
+    final paint = Paint()
+      ..color = Colors.black
+      ..strokeWidth = spatium * 0.1
+      ..style = PaintingStyle.stroke;
 
-  //   // final ledgerLines = staffModel.getLedgerLines(staffLine);
+    // Get all ledger lines needed for this note
+    final ledgerLines = staffModel.getLedgerLines(staffLine);
 
-  //   // Ledger lines should be slightly wider than the note head
-  //   final ledgerWidth = spatium * 1.6;
+    // Draw each ledger line
+    for (final line in ledgerLines) {
+      // Only draw ledger lines for notes on lines, not spaces
+      if (line % 1 == 0) {
+        // Integer values are lines
+        final y = staffTop + line * spatium;
+        final ledgerWidth = spatium * 1.728; // Another 20% wider (1.44 * 1.2)
 
-  //   for (final line in ledgerLines) {
-  //     // Apply corrections based on clef and pitch
-  //     double correctedLine;
-
-  //     if (clef == Clef.treble) {
-  //       // For treble clef ledger lines
-  //       if (line >= 5.0) {
-  //         // Correct ledger lines for C4 and below
-  //         if (line == 6.0) {
-  //           // Second ledger line below staff becomes first ledger line
-  //           correctedLine = 5.0;
-  //         } else if (line > 6.0) {
-  //           // Other lower ledger lines: shift up by 1.0
-  //           correctedLine = line - 1.0;
-  //         } else {
-  //           // First ledger line remains as is
-  //           correctedLine = line;
-  //         }
-  //       } else {
-  //         // Ledger lines above the staff - keep as is
-  //         correctedLine = line;
-  //       }
-  //     } else if (clef == Clef.bass) {
-  //       // For bass clef ledger lines
-  //       if (line <= -1.0) {
-  //         // Ledger lines above the staff
-  //         if (midiPitch != null && midiPitch >= 57) {
-  //           // For A3 and above, correct to match note
-  //           correctedLine = line + 1.0;
-  //         } else {
-  //           correctedLine = line;
-  //         }
-  //       } else if (line >= 5.0) {
-  //         // Ledger lines below the staff
-  //         if (midiPitch != null && midiPitch <= 43) {
-  //           // For G2 and below, correct to match note
-  //           correctedLine = line - 1.0;
-  //         } else {
-  //           correctedLine = line;
-  //         }
-  //       } else {
-  //         // On staff - keep as is
-  //         correctedLine = line;
-  //       }
-  //     } else {
-  //       // Other clefs - keep as is
-  //       correctedLine = line;
-  //     }
-
-  //     // Calculate Y position
-  //     final y = staffTop + correctedLine * spatium;
-  //     print(
-  //         'DRAW: Ledger line at original staff position $line, corrected to $correctedLine, Y: $y');
-
-  //     canvas.drawLine(
-  //       Offset(noteX - ledgerWidth / 2, y),
-  //       Offset(noteX + ledgerWidth / 2, y),
-  //       paint,
-  //     );
-  //   }
-  // }
+        canvas.drawLine(
+          Offset(noteX - ledgerWidth / 2, y),
+          Offset(noteX + ledgerWidth / 2, y),
+          paint,
+        );
+      }
+    }
+  }
 
   /// Get the clef symbol for a given clef
   static String getClefSymbol(Clef clef) {
@@ -395,7 +365,7 @@ class StaffEngraving {
 
     // Add key signature width
     if (keySignature != null) {
-      x += keySignature.accidentals *
+      x += keySignature.accidentalCount() *
           EngravingStyle.keysigAccidentalDistance *
           spatium;
     }
@@ -440,7 +410,7 @@ class StaffEngraving {
         text: symbol,
         style: TextStyle(
           fontFamily: 'Bravura',
-          fontSize: spatium * 3.5, // Slightly smaller than note head
+          fontSize: spatium * 3.15, // 10% smaller than before (3.5 * 0.9)
           color: Colors.black,
         ),
       ),
@@ -448,62 +418,15 @@ class StaffEngraving {
     );
     textPainter.layout();
 
-    // Use the same approach as for notes
+    // Calculate y position for accidental
     double yOffset;
-
-    if (staffLine != null &&
-        staffTop != null &&
-        midiPitch != null &&
-        clef != null) {
-      // Apply the same precise corrections as for notes
-      double correctedStaffLine;
-
-      if (clef == Clef.treble) {
-        if (midiPitch == 60) {
-          // C4 - place directly on first ledger line below staff
-          correctedStaffLine = 5.0;
-        } else if (midiPitch == 62) {
-          // D4 - place in space between staff and first ledger line
-          correctedStaffLine = 4.5;
-        } else {
-          // E4 and higher - use staff line as is
-          correctedStaffLine = staffLine;
-        }
-      } else if (clef == Clef.bass) {
-        // Bass clef corrections
-        if (midiPitch == 43) {
-          // G2 - should be on second line from bottom
-          correctedStaffLine = 3.0;
-        } else if (midiPitch == 48) {
-          // C3 - should be in space above middle line
-          correctedStaffLine = 1.5;
-        } else if (midiPitch == 53) {
-          // F3 - should be on top line
-          correctedStaffLine = 0.0;
-        } else if (midiPitch < 43) {
-          // Below G2 - adjust based on distance from G2
-          correctedStaffLine = staffLine;
-        } else if (midiPitch > 53) {
-          // Above F3 - adjust based on distance from F3
-          correctedStaffLine = staffLine;
-        } else {
-          // Between G2 and F3 - use staff line as is
-          correctedStaffLine = staffLine;
-        }
-      } else {
-        // For other clefs, use staff line as is
-        correctedStaffLine = staffLine;
-      }
-
-      final baseYPosition = staffTop + (correctedStaffLine * spatium);
-      final opticalCenterRatio = 0.5;
-      final verticalOffset = textPainter.height * opticalCenterRatio;
-      yOffset = baseYPosition - verticalOffset;
+    if (staffLine != null && staffTop != null) {
+      // Center the accidental vertically with the note head
+      final baseY = staffTop + staffLine * spatium;
+      final verticalOffset = textPainter.height * 0.5; // Center vertically
+      yOffset = baseY - verticalOffset;
     } else {
-      // If direct positioning is used
-      final opticalCenterRatio = 0.5;
-      final verticalOffset = textPainter.height * opticalCenterRatio;
-      yOffset = y - verticalOffset;
+      yOffset = y;
     }
 
     textPainter.paint(canvas, Offset(x, yOffset));

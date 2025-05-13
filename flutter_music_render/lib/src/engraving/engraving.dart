@@ -46,11 +46,11 @@ class EngravingStyle {
   static const double staffMargin = 2.0; // Margin around staff
   static const double clefMargin = 1.0; // Margin after clef
   static const double keysigMargin = 0.5; // Margin after key signature
-  static const double timesigMargin = 1.0; // Margin after time signature
+  static const double timesigMargin = 5.0; // Margin after time signature
   static const double barlineMargin = 0.5; // Margin after barline
   static const double noteSpacing = 1.0; // Base spacing between notes
   static const double keysigAccidentalDistance =
-      0.5; // Distance between key signature accidentals
+      0.8; // Distance between key signature accidentals
   static const double stemLength = 3.5; // Length of note stems
   static const double beamSpacing = 0.25; // Space between beams
   static const double ledgerLineThickness = 0.1; // Thickness of ledger lines
@@ -120,11 +120,10 @@ class EngravingStyle {
 
   // Clef positions (MuseScore values)
   static const Map<Clef, double> clefYPositions = {
-    Clef.treble: 2.0, // G clef centered on second line
-    Clef.bass:
-        0.0, // F clef centered on fourth line from bottom, moved up two lines
-    Clef.alto: 2.75, // C clef centered slightly above C line
-    Clef.tenor: 2.75, // C clef centered slightly above C line
+    Clef.treble: 1.0, // G clef centered on first line (was 2.0)
+    Clef.bass: -1.0, // F clef centered on third line from bottom (was 0.0)
+    Clef.alto: 1.75, // C clef centered slightly above C line (was 2.75)
+    Clef.tenor: 1.75, // C clef centered slightly above C line (was 2.75)
   };
 
   // Key signature positions
@@ -182,7 +181,7 @@ class EngravingStyle {
     final isSharp = keySignature.isSharp;
     final order = isSharp ? KeySignature.sharpOrder : KeySignature.flatOrder;
 
-    for (int i = 0; i < keySignature.accidentals; i++) {
+    for (int i = 0; i < keySignature.accidentalCount(); i++) {
       final note = order[i];
       final line = _getKeySignatureLine(note, clef, isSharp);
       positions.add(line);
@@ -195,99 +194,99 @@ class EngravingStyle {
   static double _getKeySignatureLine(String note, Clef clef, bool isSharp) {
     switch (clef) {
       case Clef.treble:
-        return isSharp ? _getTrebleSharpLine(note) : _getTrebleFlatLine(note);
+        return isSharp ? getTrebleSharpLine(note) : getTrebleFlatLine(note);
       case Clef.bass:
-        return isSharp ? _getBassSharpLine(note) : _getBassFlatLine(note);
+        return isSharp ? getBassSharpLine(note) : getBassFlatLine(note);
       case Clef.alto:
         return isSharp ? _getAltoSharpLine(note) : _getAltoFlatLine(note);
       case Clef.tenor:
-        return isSharp ? _getTrebleSharpLine(note) : _getTrebleFlatLine(note);
+        return isSharp ? _getTenorSharpLine(note) : _getTenorFlatLine(note);
     }
   }
 
   /// Get the treble clef sharp line for a note
-  static double _getTrebleSharpLine(String note) {
+  static double getTrebleSharpLine(String note) {
     switch (note) {
       case 'F':
-        return 3.5; // 3rd space
+        return 1.5; // F♯ on top line
       case 'C':
-        return 2.5; // 2nd space
+        return 3.0; // C♯ on 3rd space
       case 'G':
-        return 4.5; // 4th space
+        return 1.0; // G♯ on 4th line
       case 'D':
-        return 3.5; // 3rd space
+        return 2.5; // D♯ on 3rd line
       case 'A':
-        return 2.5; // 2nd space
+        return 4.0; // A♯ on 2nd line
       case 'E':
-        return 4.5; // 4th space
+        return 2.0; // E♯ on 4th line
       case 'B':
-        return 3.5; // 3rd space
+        return 3.5; // B♯ on 3rd line
       default:
         return 0.0;
     }
   }
 
   /// Get the treble clef flat line for a note
-  static double _getTrebleFlatLine(String note) {
+  static double getTrebleFlatLine(String note) {
     switch (note) {
       case 'B':
-        return 3.0; // 3rd line
+        return 3.5; // B♭ on 3rd line
       case 'E':
-        return 4.0; // 4th line
+        return 2.0; // E♭ on 4th line
       case 'A':
-        return 3.0; // 3rd line
+        return 4.0; // A♭ on 3rd line
       case 'D':
-        return 4.0; // 4th line
+        return 2.5; // D♭ on 4th line
       case 'G':
-        return 3.0; // 3rd line
+        return 4.5; // G♭ on 3rd line
       case 'C':
-        return 4.0; // 4th line
+        return 3.0; // C♭ on 4th line
       case 'F':
-        return 3.0; // 3rd line
+        return 5.0; // F♭ on 3rd line
       default:
         return 0.0;
     }
   }
 
   /// Get the bass clef sharp line for a note
-  static double _getBassSharpLine(String note) {
+  static double getBassSharpLine(String note) {
     switch (note) {
       case 'F':
-        return 1.0; // F3 (1st space)
+        return 2.5; // F♯ on 1st line
       case 'C':
-        return 2.0; // C3 (middle line)
+        return 4.0; // C♯ on 2nd line
       case 'G':
-        return 3.0; // G3 (2nd space)
+        return 2.0; // G♯ on 3rd line
       case 'D':
-        return 4.0; // D3 (1st space)
+        return 3.5; // D♯ on 4th line
       case 'A':
-        return 5.0; // A2 (middle line)
+        return 5.0; // A♯ on 1st line
       case 'E':
-        return 6.0; // E3 (2nd space)
+        return 3.0; // E♯ on 2nd line
       case 'B':
-        return 7.0; // B2 (1st space)
+        return 4.5; // B♯ on 3rd line
       default:
         return 0.0;
     }
   }
 
   /// Get the bass clef flat line for a note
-  static double _getBassFlatLine(String note) {
+  static double getBassFlatLine(String note) {
     switch (note) {
       case 'B':
-        return 1.0; // B♭2 (1st line)
+        return 4.5; // B♭ on 1st line
       case 'E':
-        return 2.0; // E♭3 (2nd line)
+        return 3.0; // E♭ on 2nd line
       case 'A':
-        return 3.0; // A♭2 (1st line)
+        return 5.0; // A♭ on 3rd line
       case 'D':
-        return 4.0; // D♭3 (2nd line)
+        return 3.5; // D♭ on 4th line
       case 'G':
-        return 5.0; // G♭2 (1st line)
+        return 5.5; // G♭ on 1st line
       case 'C':
-        return 6.0; // C♭3 (2nd line)
+        return 4.0; // C♭ on 2nd line
       case 'F':
-        return 7.0; // F♭2 (1st line)
+        return 6.0; // F♭ on 3rd line
       default:
         return 0.0;
     }
@@ -431,15 +430,28 @@ class EngravingUtils {
 
     // Get the line positions based on clef and key signature
     final isSharp = keySignature.isSharp;
+    final count = keySignature.accidentalCount();
+
+    // Use the correct order from KeySignature class
     final order = isSharp ? KeySignature.sharpOrder : KeySignature.flatOrder;
-    final linePositions =
-        EngravingStyle.getKeySignatureLines(keySignature, clef);
+    print('Key signature order: $order');
 
     double xOffset = 0.0;
 
-    for (int i = 0; i < keySignature.accidentals; i++) {
-      // Line position from the pre-defined key signature positions
-      final linePosition = linePositions[i];
+    // Use the order directly - no need to reverse for flats as flatOrder is already correct
+    final notes = order.sublist(0, count);
+    print('Processing notes in order: $notes');
+
+    for (final note in notes) {
+      print('Processing note: $note');
+      final linePosition = isSharp
+          ? (clef == Clef.treble
+              ? EngravingStyle.getTrebleSharpLine(note)
+              : EngravingStyle.getBassSharpLine(note))
+          : (clef == Clef.treble
+              ? EngravingStyle.getTrebleFlatLine(note)
+              : EngravingStyle.getBassFlatLine(note));
+      print('Line position for $note: $linePosition');
 
       // Add position for this accidental
       positions.add(SpPoint(xOffset, linePosition));
