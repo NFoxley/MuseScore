@@ -117,7 +117,7 @@ class StaffEngraving {
     // Draw time signature if needed
     if (timeSignature != null) {
       final timeX = clefX + EngravingStyle.clefMargin * spatium;
-      final timeY = staffTop + 2.0 * spatium; // Center on staff
+      final timeY = staffTop + 1.25 * spatium; // Center on staff
       print('StaffEngraving: Drawing time signature at ($timeX, $timeY)');
 
       final numeratorPainter = TextPainter(
@@ -125,7 +125,7 @@ class StaffEngraving {
           text: timeSignature.numerator.toString(),
           style: TextStyle(
             fontFamily: 'Bravura',
-            fontSize: spatium * 2,
+            fontSize: spatium * 2.6,
             color: Colors.black,
           ),
         ),
@@ -133,13 +133,12 @@ class StaffEngraving {
       );
       numeratorPainter.layout();
       numeratorPainter.paint(canvas, Offset(timeX, timeY - spatium));
-
       final denominatorPainter = TextPainter(
         text: TextSpan(
           text: timeSignature.denominator.toString(),
           style: TextStyle(
             fontFamily: 'Bravura',
-            fontSize: spatium * 2,
+            fontSize: spatium * 2.6,
             color: Colors.black,
           ),
         ),
@@ -269,11 +268,22 @@ class StaffEngraving {
             useFlats: prevNote.accidentalType == AccidentalType.flat);
         final prevBaseNote = prevNoteName[0];
         if (prevBaseNote == baseNote) {
-          wasAlteredEarlier = true;
-          previousAccidental = prevNote.accidentalType;
-          print(
-              'Note was altered earlier by $prevNoteName with ${prevNote.accidentalType}');
-          break;
+          // Only consider it altered if it deviates from its key signature state
+          final prevIsInKey =
+              keyAccidentals.sublist(0, count).contains(prevBaseNote);
+          final prevKeyAccidentalType = prevIsInKey
+              ? (keySignature.isSharp
+                  ? AccidentalType.sharp
+                  : AccidentalType.flat)
+              : AccidentalType.none;
+
+          if (prevNote.accidentalType != prevKeyAccidentalType) {
+            wasAlteredEarlier = true;
+            previousAccidental = prevNote.accidentalType;
+            print(
+                'Note was altered earlier by $prevNoteName with ${prevNote.accidentalType}');
+            break;
+          }
         }
       }
 
