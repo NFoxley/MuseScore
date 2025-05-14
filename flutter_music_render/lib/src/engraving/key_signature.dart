@@ -1,8 +1,11 @@
 import 'package:flutter_music_render/flutter_music_render.dart';
 
+enum KeyMode { major, minor }
+
 /// Represents a musical key signature
 class KeySignature {
   final MusicalKey key;
+  final KeyMode mode;
   final bool useFlats;
 
   /// The order of sharps: F C G D A E B
@@ -25,6 +28,7 @@ class KeySignature {
 
   KeySignature({
     required this.key,
+    this.mode = KeyMode.major,
     this.useFlats = false,
   });
 
@@ -241,11 +245,10 @@ class KeySignature {
 
   /// Returns whether this key signature uses sharps
   bool get isSharp {
-    if (key == MusicalKey.c) return false;
+    final useKey = mode == KeyMode.minor ? relativeMajor : key;
+    if (useKey == MusicalKey.c) return false;
     if (useFlats) return false;
-
-    // Keys that use sharps: G, D, A, E, B, F#, C#
-    switch (key) {
+    switch (useKey) {
       case MusicalKey.g:
       case MusicalKey.d:
       case MusicalKey.a:
@@ -261,7 +264,8 @@ class KeySignature {
 
   /// Returns the number of accidentals in this key signature
   int accidentalCount() {
-    switch (key) {
+    final useKey = mode == KeyMode.minor ? relativeMajor : key;
+    switch (useKey) {
       case MusicalKey.c:
         return 0;
       case MusicalKey.g:
@@ -341,5 +345,41 @@ class KeySignature {
   /// Returns the list of MIDI pitch classes affected by this key signature
   List<int> getAccidentalsInKey() {
     return accidentals;
+  }
+
+  MusicalKey get relativeMajor {
+    if (mode == KeyMode.major) return key;
+    switch (key) {
+      case MusicalKey.a:
+        return MusicalKey.c;
+      case MusicalKey.e:
+        return MusicalKey.g;
+      case MusicalKey.b:
+        return MusicalKey.d;
+      case MusicalKey.fs:
+        return MusicalKey.a;
+      case MusicalKey.cs:
+        return MusicalKey.e;
+      case MusicalKey.g:
+        return MusicalKey.bb;
+      case MusicalKey.d:
+        return MusicalKey.f;
+      case MusicalKey.c:
+        return MusicalKey.eb;
+      case MusicalKey.f:
+        return MusicalKey.ab;
+      case MusicalKey.bb:
+        return MusicalKey.db;
+      case MusicalKey.eb:
+        return MusicalKey.gb;
+      case MusicalKey.ab:
+        return MusicalKey.cb;
+      case MusicalKey.db:
+        return MusicalKey.e;
+      case MusicalKey.gb:
+        return MusicalKey.b;
+      case MusicalKey.cb:
+        return MusicalKey.fs;
+    }
   }
 }

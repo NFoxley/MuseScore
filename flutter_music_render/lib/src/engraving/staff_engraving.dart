@@ -199,15 +199,20 @@ class StaffEngraving {
 
       // Draw ledger lines if needed
       if (staffLine < 0 || staffLine > 4) {
-        drawLedgerLines(
-            canvas, staffModel, staffLine, currentX, staffTop, spatium,
-            clef: clef, midiPitch: note.midiPitch);
+        // Only draw ledger lines for notes, not rests
+        if (note.midiPitch != -1) {
+          drawLedgerLines(
+              canvas, staffModel, staffLine, currentX, staffTop, spatium,
+              clef: clef, midiPitch: note.midiPitch);
+        }
       }
 
       // Draw the note
       final textPainter = TextPainter(
         text: TextSpan(
-          text: '\uE1D5', // Quarter note symbol
+          text: note.midiPitch == -1
+              ? _getRestSymbol(note.duration) // Use rest symbol for rests
+              : _getNoteSymbol(note.duration), // Use note symbol for notes
           style: TextStyle(
             fontFamily: 'Bravura',
             fontSize: spatium * 5.0,
@@ -220,12 +225,21 @@ class StaffEngraving {
 
       // Calculate proper note positioning
       final xOffset = currentX - (textPainter.width / 2);
-      final baseYPosition = staffTop + (staffLine * spatium);
-      final opticalCenterRatio = 0.5;
-      final verticalOffset = textPainter.height * opticalCenterRatio;
-      final yOffset = baseYPosition - verticalOffset;
 
-      // Draw the note at the calculated position
+      // Different positioning for rests vs notes
+      double yOffset;
+      if (note.midiPitch == -1) {
+        // Position all rests in the middle of the staff
+        yOffset = staffTop + -0.5 * spatium; // Center of staff
+      } else {
+        // Regular note positioning
+        final baseYPosition = staffTop + (staffLine * spatium);
+        final opticalCenterRatio = 0.5;
+        final verticalOffset = textPainter.height * opticalCenterRatio;
+        yOffset = baseYPosition - verticalOffset;
+      }
+
+      // Draw the note/rest at the calculated position
       textPainter.paint(canvas, Offset(xOffset, yOffset));
 
       // Determine if we need to show an accidental
@@ -438,6 +452,42 @@ class StaffEngraving {
     print('DRAW: Accidental height: ${textPainter.height}');
     if (staffLine != null) {
       print('DRAW: Staff line: $staffLine');
+    }
+  }
+
+  /// Get the appropriate note symbol for a given duration
+  static String _getNoteSymbol(NoteDuration duration) {
+    switch (duration) {
+      case NoteDuration.whole:
+        return '\uE1D2'; // Whole note
+      case NoteDuration.half:
+        return '\uE1D3'; // Half note
+      case NoteDuration.quarter:
+        return '\uE1D5'; // Quarter note
+      case NoteDuration.eighth:
+        return '\uE1D7'; // Eighth note
+      case NoteDuration.sixteenth:
+        return '\uE1D9'; // Sixteenth note
+      default:
+        return '\uE1D5'; // Default to quarter note
+    }
+  }
+
+  /// Get the appropriate rest symbol for a given duration
+  static String _getRestSymbol(NoteDuration duration) {
+    switch (duration) {
+      case NoteDuration.whole:
+        return '\uE4E3'; // Whole rest
+      case NoteDuration.half:
+        return '\uE4E4'; // Half rest
+      case NoteDuration.quarter:
+        return '\uE4E5'; // Quarter rest
+      case NoteDuration.eighth:
+        return '\uE4E6'; // Eighth rest
+      case NoteDuration.sixteenth:
+        return '\uE4E7'; // Sixteenth rest
+      default:
+        return '\uE4E5'; // Default to quarter rest
     }
   }
 }

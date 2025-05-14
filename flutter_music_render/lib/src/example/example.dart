@@ -22,14 +22,60 @@ class PianoKeyboardExample extends StatefulWidget {
 
 class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
   final List<Note> _notes = [
+    // Whole note
+    Note(
+      midiPitch: 60, // C4
+      duration: NoteDuration.whole,
+      linePosition: 0,
+    ),
+    // Half note
+    Note(
+      midiPitch: 62, // D4
+      duration: NoteDuration.half,
+      linePosition: 0,
+    ),
+    // Quarter note
+    Note(
+      midiPitch: 64, // E4
+      duration: NoteDuration.quarter,
+      linePosition: 0,
+    ),
+    // Eighth note
     Note(
       midiPitch: 65, // F4
+      duration: NoteDuration.eighth,
+      linePosition: 0,
+    ),
+    // Sixteenth note
+    Note(
+      midiPitch: 67, // G4
+      duration: NoteDuration.sixteenth,
+      linePosition: 0,
+    ),
+    // Rest examples with different durations
+    Note(
+      midiPitch: -1, // Whole rest
+      duration: NoteDuration.whole,
+      linePosition: 0,
+    ),
+    Note(
+      midiPitch: -1, // Half rest
+      duration: NoteDuration.half,
+      linePosition: 0,
+    ),
+    Note(
+      midiPitch: -1, // Quarter rest
       duration: NoteDuration.quarter,
       linePosition: 0,
     ),
     Note(
-      midiPitch: 60, // C4
-      duration: NoteDuration.quarter,
+      midiPitch: -1, // Eighth rest
+      duration: NoteDuration.eighth,
+      linePosition: 0,
+    ),
+    Note(
+      midiPitch: -1, // Sixteenth rest
+      duration: NoteDuration.sixteenth,
       linePosition: 0,
     ),
   ];
@@ -105,21 +151,51 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
             tooltip: 'Select Key Signature',
             onSelected: _changeKeySignature,
             itemBuilder: (context) => [
+              // Major keys
               PopupMenuItem(
-                value: KeySignature(key: MusicalKey.c),
+                value: KeySignature(key: MusicalKey.c, mode: KeyMode.major),
                 child: const Text('C Major'),
               ),
               PopupMenuItem(
-                value: KeySignature(key: MusicalKey.bb),
+                value: KeySignature(key: MusicalKey.bb, mode: KeyMode.major),
                 child: const Text('B♭ Major'),
               ),
               PopupMenuItem(
-                value: KeySignature(key: MusicalKey.e),
+                value: KeySignature(key: MusicalKey.e, mode: KeyMode.major),
                 child: const Text('E Major'),
               ),
               PopupMenuItem(
-                value: KeySignature(key: MusicalKey.db),
+                value: KeySignature(key: MusicalKey.db, mode: KeyMode.major),
                 child: const Text('D♭ Major'),
+              ),
+              // Minor keys
+              PopupMenuItem(
+                value: KeySignature(key: MusicalKey.a, mode: KeyMode.minor),
+                child: const Text('A minor'),
+              ),
+              PopupMenuItem(
+                value: KeySignature(key: MusicalKey.g, mode: KeyMode.minor),
+                child: const Text('G minor'),
+              ),
+              PopupMenuItem(
+                value: KeySignature(key: MusicalKey.e, mode: KeyMode.minor),
+                child: const Text('E minor'),
+              ),
+              PopupMenuItem(
+                value: KeySignature(key: MusicalKey.d, mode: KeyMode.minor),
+                child: const Text('D minor'),
+              ),
+              PopupMenuItem(
+                value: KeySignature(key: MusicalKey.bb, mode: KeyMode.minor),
+                child: const Text('B♭ minor'),
+              ),
+              PopupMenuItem(
+                value: KeySignature(key: MusicalKey.c, mode: KeyMode.minor),
+                child: const Text('C minor'),
+              ),
+              PopupMenuItem(
+                value: KeySignature(key: MusicalKey.f, mode: KeyMode.minor),
+                child: const Text('F minor'),
               ),
             ],
           ),
