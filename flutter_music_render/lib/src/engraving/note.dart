@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// Represents the accidental type for a note
 enum AccidentalType {
   none,
@@ -10,86 +12,111 @@ enum AccidentalType {
 
 /// Represents a musical note with its pitch, duration, and position
 class Note {
+  /// The MIDI pitch of the note (-1 for rests)
   final int midiPitch;
+
+  /// The duration of the note
   final NoteDuration duration;
+
+  /// The position on the staff (0 = middle line)
   final double linePosition;
 
-  // Accidental information
-  AccidentalType accidentalType;
-  bool showAccidental;
+  /// The type of accidental
+  final AccidentalType accidentalType;
 
-  // Staff line value following MuseScore's convention
-  // 0 = center line of staff (B4 for treble, D3 for bass)
-  // Positive values go DOWN (lower pitches)
-  // Negative values go UP (higher pitches)
-  // Integer values = lines, half-integer values = spaces
-  double? _staffLine;
+  /// Whether to show the accidental
+  final bool showAccidental;
 
-  double get staffLine => _staffLine ?? linePosition;
+  /// The color of the note (null for default color)
+  final Color? color;
 
-  void setStaffLine(double line) {
-    _staffLine = line;
-  }
+  /// The staff line position (calculated)
+  final double staffLine;
 
-  Note({
+  /// Creates a new note
+  const Note({
     required this.midiPitch,
     required this.duration,
     required this.linePosition,
     this.accidentalType = AccidentalType.none,
     this.showAccidental = false,
-  });
+    this.color,
+  }) : staffLine = linePosition;
 
-  // Create a copy of this note with a new staff line
-  Note copyWithStaffLine(double staffLine) {
-    final note = Note(
-      midiPitch: midiPitch,
-      duration: duration,
-      linePosition: linePosition,
-      accidentalType: accidentalType,
-      showAccidental: showAccidental,
+  /// Creates a copy of this note with the given fields replaced with new values
+  Note copyWith({
+    int? midiPitch,
+    NoteDuration? duration,
+    double? linePosition,
+    AccidentalType? accidentalType,
+    bool? showAccidental,
+    Color? color,
+  }) {
+    return Note(
+      midiPitch: midiPitch ?? this.midiPitch,
+      duration: duration ?? this.duration,
+      linePosition: linePosition ?? this.linePosition,
+      accidentalType: accidentalType ?? this.accidentalType,
+      showAccidental: showAccidental ?? this.showAccidental,
+      color: color ?? this.color,
     );
-    note.setStaffLine(staffLine);
-    return note;
   }
 
-  // Get the note name based on MIDI pitch and whether to use flats or sharps
-  String getNoteName({bool useFlats = false}) {
-    final pitchClass = midiPitch % 12;
-    final octave = (midiPitch ~/ 12) - 1; // Standard MIDI octave calculation
+  /// Creates a copy of this note with a new staff line
+  Note copyWithStaffLine(double newStaffLine) {
+    return Note(
+      midiPitch: midiPitch,
+      duration: duration,
+      linePosition: newStaffLine,
+      accidentalType: accidentalType,
+      showAccidental: showAccidental,
+      color: color,
+    );
+  }
 
-    // Define the notes in order with their accidentals
+  /// Gets the note name (e.g., "C", "D#", "Eb")
+  String getNoteName({bool useFlats = false}) {
+    if (midiPitch == -1) return "Rest";
+
     final sharpNames = [
       'C',
-      'C♯',
+      'C#',
       'D',
-      'D♯',
+      'D#',
       'E',
       'F',
-      'F♯',
+      'F#',
       'G',
-      'G♯',
+      'G#',
       'A',
-      'A♯',
+      'A#',
       'B'
     ];
 
     final flatNames = [
       'C',
-      'D♭',
+      'Db',
       'D',
-      'E♭',
+      'Eb',
       'E',
       'F',
-      'G♭',
+      'Gb',
       'G',
-      'A♭',
+      'Ab',
       'A',
-      'B♭',
+      'Bb',
       'B'
     ];
 
-    final noteName = useFlats ? flatNames[pitchClass] : sharpNames[pitchClass];
-    return '$noteName$octave';
+    final noteIndex = midiPitch % 12;
+    final octave = (midiPitch ~/ 12) - 1;
+
+    // Use flats if explicitly requested or if the note has a flat accidental
+    final shouldUseFlats = useFlats || accidentalType == AccidentalType.flat;
+    final noteNames = shouldUseFlats ? flatNames : sharpNames;
+    final name = noteNames[noteIndex];
+
+    return '$name$octave';
   }
 
   // Get the accidental symbol as a string
@@ -112,6 +139,10 @@ class Note {
 
   /// Get the pitch class of the note (0-11)
   int get pitchClass => midiPitch % 12;
+
+  void setStaffLine(double line) {
+    // Implementation needed
+  }
 }
 
 /// Represents the duration of a note

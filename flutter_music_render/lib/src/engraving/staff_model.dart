@@ -13,43 +13,6 @@ class StaffModel {
   // Define the reference positions for each clef as a map
   // Key is the MIDI pitch and value is the staff line position
   // Standard traditional staff notation
-  static const Map<int, double> _trebleRefPositions = {
-    // From low to high
-    60: 5.5, // C4 (middle C) is 1st ledger line below staff
-    62: 5.0, // D4 is below staff
-    64: 4.5, // E4 is bottom line of staff
-    65: 4.0, // F4 is space above bottom line
-    67: 3.5, // G4 is second line from bottom
-    69: 3.0, // A4 is second space from bottom
-    71: 2.5, // B4 is middle line
-    72: 2.0, // C5 is space above middle line
-    74: 1.5, // D5 is fourth line from bottom
-    76: 1.0, // E5 is top space
-    77: 0.5, // F5 is top line
-    79: 0.0, // G5 is space above staff
-    81: -0.5, // A5 is 1st ledger line above staff
-    83: -1.0, // B5 is 1st space above 1st ledger
-    84: -1.5, // C6 is 2nd ledger line above staff
-  };
-
-  static const Map<int, double> _bassRefPositions = {
-    // From low to high
-    36: 6.5, // C2 is 2nd ledger line below staff
-    38: 6.0, // D2 is 1st ledger line below staff
-    40: 5.5, // E2 is bottom line of staff
-    41: 5.0, // F2 is space above bottom line
-    43: 4.5, // G2 is bottom line from bottom
-    45: 4.0, // A2 is second space from bottom
-    47: 3.5, // B2 is middle line
-    48: 3.0, // C3 is space above middle line
-    50: 2.5, // D3 is middle line
-    52: 2.0, // E3 is second top space
-    53: 1.5, // F3 is second top line
-    55: 1.0, // G3 is top space
-    57: 0.5, // A3 is top line
-    59: 0.0, // B3 is space above staff
-    60: -0.5, // C4 (middle C) is 1st ledger line above staff
-  };
 
   // Special mapping for enharmonic notes
   // Maps MIDI pitch to staff line positions based on accidental type
@@ -350,3 +313,42 @@ class StaffModel {
     return ledgerLines;
   }
 }
+
+
+const Map<int, double> _trebleRefPositions = {
+  // From low to high
+  60: 5.5, // C4 (middle C) is 1st ledger line below staff
+  62: 5.0, // D4 is below staff
+  64: 4.5, // E4 is bottom line of staff
+  65: 4.0, // F4 is space above bottom line
+  67: 3.5, // G4 is second line from bottom
+  69: 3.0, // A4 is second space from bottom
+  71: 2.5, // B4 is middle line
+  72: 2.0, // C5 is space above middle line
+  74: 1.5, // D5 is fourth line from bottom
+  76: 1.0, // E5 is top space
+  77: 0.5, // F5 is top line
+  79: 0.0, // G5 is space above staff
+  81: -0.5, // A5 is 1st ledger line above staff
+  83: -1.0, // B5 is 1st space above 1st ledger
+  84: -1.5, // C6 is 2nd ledger line above staff
+};
+
+const Map<int, double> _bassRefPositions = {
+  // From low to high
+  36: 6.5, // C2 is 2nd ledger line below staff
+  38: 6.0, // D2 is 1st ledger line below staff
+  40: 5.5, // E2 is bottom line of staff
+  41: 5.0, // F2 is space above bottom line
+  43: 4.5, // G2 is bottom line from bottom
+  45: 4.0, // A2 is second space from bottom
+  47: 3.5, // B2 is middle line
+  48: 3.0, // C3 is space above middle line
+  50: 2.5, // D3 is middle line
+  52: 2.0, // E3 is second top space
+  53: 1.5, // F3 is second top line
+  55: 1.0, // G3 is top space
+  57: 0.5, // A3 is top line
+  59: 0.0, // B3 is space above staff
+  60: -0.5, // C4 (middle C) is 1st ledger line above staff
+};

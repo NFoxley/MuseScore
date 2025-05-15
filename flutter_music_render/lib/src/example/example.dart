@@ -23,57 +23,59 @@ class PianoKeyboardExample extends StatefulWidget {
 class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
   final List<Note> _notes = [
     // Whole note
-    Note(
+    const Note(
       midiPitch: 60, // C4
       duration: NoteDuration.whole,
       linePosition: 0,
+      color: Colors.blue, // Example of a colored note
     ),
     // Half note
-    Note(
+    const Note(
       midiPitch: 62, // D4
       duration: NoteDuration.half,
       linePosition: 0,
+      color: Colors.red, // Example of a colored note
     ),
     // Quarter note
-    Note(
+    const Note(
       midiPitch: 64, // E4
       duration: NoteDuration.quarter,
       linePosition: 0,
     ),
     // Eighth note
-    Note(
+    const Note(
       midiPitch: 65, // F4
       duration: NoteDuration.eighth,
       linePosition: 0,
     ),
     // Sixteenth note
-    Note(
+    const Note(
       midiPitch: 67, // G4
       duration: NoteDuration.sixteenth,
       linePosition: 0,
     ),
     // Rest examples with different durations
-    Note(
+    const Note(
       midiPitch: -1, // Whole rest
       duration: NoteDuration.whole,
       linePosition: 0,
     ),
-    Note(
+    const Note(
       midiPitch: -1, // Half rest
       duration: NoteDuration.half,
       linePosition: 0,
     ),
-    Note(
+    const Note(
       midiPitch: -1, // Quarter rest
       duration: NoteDuration.quarter,
       linePosition: 0,
     ),
-    Note(
+    const Note(
       midiPitch: -1, // Eighth rest
       duration: NoteDuration.eighth,
       linePosition: 0,
     ),
-    Note(
+    const Note(
       midiPitch: -1, // Sixteenth rest
       duration: NoteDuration.sixteenth,
       linePosition: 0,
@@ -83,20 +85,42 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
   Clef _clef = Clef.treble;
   bool _useFlats = false;
   KeySignature _keySignature = KeySignature(key: MusicalKey.c);
-  final TimeSignature _timeSignature = TimeSignature(4, 4);
+  TimeSignature _timeSignature = TimeSignature(4, 4);
+
+  // Add map to track key states
+  final Map<int, PianoKeyState> _keyStates = {};
+
+  // Track the note to center
+  int? _centerMidiPitch;
+
+  // Track the color of the next note to be added
+  Color? _nextNoteColor;
 
   @override
   void initState() {
     super.initState();
     // Initialize key signature state
     _keySignature.initializeNoteState();
+
+    // Example: Highlight and center F4 (MIDI pitch 65)
+    _keyStates[65] = PianoKeyState.selected;
+    _centerMidiPitch = 65;
   }
 
   void _handleNoteSelected(Note note) {
     setState(() {
-      _notes.add(note);
+      // Create a new note with the current color if set
+      final coloredNote = note.copyWith(color: _nextNoteColor);
+      _notes.add(coloredNote);
+
       // Update key signature state after adding note
-      _keySignature.updateNoteState(note);
+      _keySignature.updateNoteState(coloredNote);
+
+      // Example: Highlight and center the first note of a passage
+      if (_notes.length == 1) {
+        _keyStates[note.midiPitch] = PianoKeyState.selected;
+        _centerMidiPitch = note.midiPitch;
+      }
     });
   }
 
@@ -105,6 +129,11 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
       _notes.clear();
       // Reinitialize key signature state after clearing notes
       _keySignature.initializeNoteState();
+      // Clear key states and center note
+      _keyStates.clear();
+      _centerMidiPitch = null;
+      // Clear next note color
+      _nextNoteColor = null;
     });
   }
 
@@ -130,6 +159,20 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
     });
   }
 
+  // Add method to center a specific note
+  void _centerNote(int midiPitch) {
+    setState(() {
+      _centerMidiPitch = midiPitch;
+    });
+  }
+
+  // Add method to set the color for the next note
+  void _setNextNoteColor(Color? color) {
+    setState(() {
+      _nextNoteColor = color;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -145,6 +188,27 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
             icon: Text(_useFlats ? '♭' : '♯'),
             onPressed: _toggleAccidentals,
             tooltip: 'Toggle Accidentals',
+          ),
+          // Add color picker buttons
+          IconButton(
+            icon: const Icon(Icons.color_lens, color: Colors.blue),
+            onPressed: () => _setNextNoteColor(Colors.blue),
+            tooltip: 'Set next note to blue',
+          ),
+          IconButton(
+            icon: const Icon(Icons.color_lens, color: Colors.red),
+            onPressed: () => _setNextNoteColor(Colors.red),
+            tooltip: 'Set next note to red',
+          ),
+          IconButton(
+            icon: const Icon(Icons.color_lens, color: Colors.green),
+            onPressed: () => _setNextNoteColor(Colors.green),
+            tooltip: 'Set next note to green',
+          ),
+          IconButton(
+            icon: const Icon(Icons.color_lens_outlined),
+            onPressed: () => _setNextNoteColor(null),
+            tooltip: 'Reset note color',
           ),
           PopupMenuButton<KeySignature>(
             icon: const Icon(Icons.music_note),
@@ -199,6 +263,12 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
               ),
             ],
           ),
+          // Add button to center A♭5 (MIDI pitch 80)
+          IconButton(
+            icon: const Text('A♭5'),
+            onPressed: () => _centerNote(80),
+            tooltip: 'Center A♭5',
+          ),
         ],
       ),
       body: Column(
@@ -222,6 +292,8 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
               keySignature: _keySignature,
               useFlats: _useFlats,
               clef: _clef,
+              keyStates: _keyStates,
+              centerMidiPitch: _centerMidiPitch,
             ),
           ),
         ],
@@ -234,8 +306,8 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
 // import 'package:flutter/material.dart';
 // import 'package:flutter_music_render/flutter_music_render.dart';
 
-// void main() {
-//   runApp(const MaterialApp(
-//     home: PianoKeyboardExample(),
-//   ));
-// }
+void main() {
+  runApp(const MaterialApp(
+    home: PianoKeyboardExample(),
+  ));
+}

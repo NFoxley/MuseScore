@@ -208,39 +208,8 @@ class StaffEngraving {
       }
 
       // Draw the note
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: note.midiPitch == -1
-              ? _getRestSymbol(note.duration) // Use rest symbol for rests
-              : _getNoteSymbol(note.duration), // Use note symbol for notes
-          style: TextStyle(
-            fontFamily: 'Bravura',
-            fontSize: spatium * 5.0,
-            color: Colors.black,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
-
-      // Calculate proper note positioning
-      final xOffset = currentX - (textPainter.width / 2);
-
-      // Different positioning for rests vs notes
-      double yOffset;
-      if (note.midiPitch == -1) {
-        // Position all rests in the middle of the staff
-        yOffset = staffTop + -0.5 * spatium; // Center of staff
-      } else {
-        // Regular note positioning
-        final baseYPosition = staffTop + (staffLine * spatium);
-        final opticalCenterRatio = 0.5;
-        final verticalOffset = textPainter.height * opticalCenterRatio;
-        yOffset = baseYPosition - verticalOffset;
-      }
-
-      // Draw the note/rest at the calculated position
-      textPainter.paint(canvas, Offset(xOffset, yOffset));
+      drawNote(
+          canvas, note, currentX, staffTop + (staffLine * spatium), spatium);
 
       // Determine if we need to show an accidental
       bool needsAccidental = keySignature.needsAccidental(note, previousNotes);
@@ -253,8 +222,8 @@ class StaffEngraving {
       if (needsAccidental) {
         print(
             'DRAW: Drawing accidental \\${accidentalToShow} for note \\${note.getNoteName()}');
-        drawAccidental(canvas, accidentalToShow, xOffset - (spatium * 1.2),
-            yOffset, spatium,
+        drawAccidental(canvas, accidentalToShow, currentX - (spatium * 1.2),
+            staffTop + (staffLine * spatium), spatium,
             staffLine: staffLine,
             staffTop: staffTop,
             midiPitch: note.midiPitch,
@@ -356,7 +325,74 @@ class StaffEngraving {
     return x;
   }
 
-  /// Draw an accidental symbol
+  /// Draw a note on the staff
+  static void drawNote(
+      Canvas canvas, Note note, double x, double y, double spatium) {
+    print('DRAW: Base y position: $y');
+    print('DRAW: Spatium: $spatium');
+
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: note.midiPitch == -1
+            ? _getRestSymbol(note.duration) // Use rest symbol for rests
+            : _getNoteSymbol(note.duration), // Use note symbol for notes
+        style: TextStyle(
+          fontFamily: 'Bravura',
+          fontSize: spatium * 5.0,
+          color: note.color ?? Colors.black,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+
+    // Calculate proper note positioning
+    final xOffset = x - (textPainter.width / 2);
+
+    double yOffset;
+    if (note.midiPitch == -1) {
+      // For rests, ignore the provided y and use the middle staff line
+      // The staffTop is (size.height - staffHeight) / 2 in drawStaff
+      // But here, y is always staffTop + (staffLine * spatium)
+      // So, to get staffTop, subtract (staffLine * spatium) from y
+      // For rests, staffLine should be 2 (middle line)
+      final staffLine = 2.0;
+      final staffTop = y - (note.staffLine * spatium);
+      final restY = staffTop + (staffLine * spatium);
+      yOffset =
+          restY - (textPainter.height / 2.5); // Center the rest vertically
+      print(
+          'DRAW: Calculated rest yOffset: $yOffset (restY: $restY, staffTop: $staffTop)');
+    } else {
+      // Regular note positioning
+      final opticalCenterRatio = 0.5;
+      final verticalOffset = textPainter.height * opticalCenterRatio;
+      yOffset = y - verticalOffset;
+      print('DRAW: Note yOffset: $yOffset');
+    }
+
+    textPainter.paint(canvas, Offset(xOffset, yOffset));
+
+    print('DRAW: Drawing note at ($xOffset, $yOffset)');
+    print('DRAW: Note height: ${textPainter.height}');
+    print('DRAW: Note width: ${textPainter.width}');
+  }
+
+  /// Draw a flag on a note stem
+  static void _drawFlag(
+      Canvas canvas, double x, double y, double spatium, Paint paint) {
+    final path = Path()
+      ..moveTo(x, y)
+      ..quadraticBezierTo(
+        x + spatium * 0.5,
+        y + spatium * 0.5,
+        x + spatium * 0.3,
+        y + spatium,
+      );
+    canvas.drawPath(path, paint);
+  }
+
+  /// Draw an accidental
   static void drawAccidental(Canvas canvas, AccidentalType accidentalType,
       double x, double y, double spatium,
       {double? staffLine, double? staffTop, int? midiPitch, Clef? clef}) {
@@ -444,11 +480,15 @@ class StaffEngraving {
       yOffset = y;
     }
 
+    // Add spacing between accidental and note
+    final accidentalX =
+        x - spatium * 0.9; // Adjusted spacing to be more reasonable
+
     // Draw the accidental
-    textPainter.paint(canvas, Offset(x, yOffset));
+    textPainter.paint(canvas, Offset(accidentalX, yOffset));
 
     // Debug information
-    print('DRAW: Drawing accidental $symbol at ($x, $yOffset)');
+    print('DRAW: Drawing accidental $symbol at ($accidentalX, $yOffset)');
     print('DRAW: Accidental height: ${textPainter.height}');
     if (staffLine != null) {
       print('DRAW: Staff line: $staffLine');

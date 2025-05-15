@@ -9,7 +9,7 @@ export 'src/engraving/time_signature.dart' show TimeSignature;
 
 // Widget exports
 export 'src/widgets/staff.dart' show Staff, StaffState;
-export 'src/widgets/piano_keyboard.dart' show PianoKeyboard;
+export 'src/widgets/piano_keyboard.dart' show PianoKeyboard, PianoKeyState;
 export 'src/widgets/key_signature_button.dart' show KeySignatureButton;
 
 // Example exports
