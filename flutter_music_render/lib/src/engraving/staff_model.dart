@@ -314,7 +314,6 @@ class StaffModel {
   }
 }
 
-
 const Map<int, double> _trebleRefPositions = {
   // From low to high
   60: 5.5, // C4 (middle C) is 1st ledger line below staff

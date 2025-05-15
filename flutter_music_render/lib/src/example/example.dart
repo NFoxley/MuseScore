@@ -271,40 +271,205 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          SizedBox(
-            height: 200,
-            width: double.infinity,
-            child: Staff(
-              notes: _notes,
-              clef: _clef,
-              timeSignature: _timeSignature,
-              keySignature: _keySignature,
-              onClear: _handleClear,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(
+              height: 200,
+              width: double.infinity,
+              child: Staff(
+                notes: _notes,
+                clef: _clef,
+                timeSignature: _timeSignature,
+                keySignature: _keySignature,
+                onClear: _handleClear,
+              ),
             ),
-          ),
-          SizedBox(
-            height: 200,
-            child: PianoKeyboard(
-              notes: _notes,
-              onNoteSelected: _handleNoteSelected,
-              keySignature: _keySignature,
-              useFlats: _useFlats,
-              clef: _clef,
-              keyStates: _keyStates,
-              centerMidiPitch: _centerMidiPitch,
+            SizedBox(
+              height: 200,
+              child: PianoKeyboard(
+                notes: _notes,
+                onNoteSelected: _handleNoteSelected,
+                keySignature: _keySignature,
+                useFlats: _useFlats,
+                clef: _clef,
+                keyStates: _keyStates,
+                centerMidiPitch: _centerMidiPitch,
+              ),
             ),
-          ),
-        ],
+            // Add second staff for A major scale
+            SizedBox(
+              height: 200,
+              width: double.infinity,
+              child: Staff(
+                notes: const [
+                  // A major scale from A2 to A3 in bass clef
+                  // Each note has its proper staff position and accidental type
+                  Note(
+                      midiPitch: 45,
+                      duration: NoteDuration.quarter,
+                      linePosition: -6,
+                      accidentalType: AccidentalType.none), // A2
+                  Note(
+                      midiPitch: 47,
+                      duration: NoteDuration.quarter,
+                      linePosition: -5,
+                      accidentalType: AccidentalType.none), // B2
+                  Note(
+                      midiPitch: 49,
+                      duration: NoteDuration.quarter,
+                      linePosition: -4,
+                      accidentalType: AccidentalType.sharp), // C#3
+                  Note(
+                      midiPitch: 50,
+                      duration: NoteDuration.quarter,
+                      linePosition: -3,
+                      accidentalType: AccidentalType.none), // D3
+                  Note(
+                      midiPitch: 52,
+                      duration: NoteDuration.quarter,
+                      linePosition: -2,
+                      accidentalType: AccidentalType.none), // E3
+                  Note(
+                      midiPitch: 54,
+                      duration: NoteDuration.quarter,
+                      linePosition: -1,
+                      accidentalType: AccidentalType.sharp), // F#3
+                  Note(
+                      midiPitch: 56,
+                      duration: NoteDuration.quarter,
+                      linePosition: 0,
+                      accidentalType: AccidentalType.sharp), // G#3
+                  Note(
+                      midiPitch: 57,
+                      duration: NoteDuration.quarter,
+                      linePosition: 1,
+                      accidentalType: AccidentalType.none), // A3
+                ],
+                clef: Clef.bass,
+                timeSignature: const TimeSignature(4, 4),
+                keySignature:
+                    KeySignature(key: MusicalKey.a, mode: KeyMode.major),
+              ),
+            ),
+            // Add third staff demonstrating courtesy accidentals and natural signs
+            SizedBox(
+              height: 200,
+              width: double.infinity,
+              child: Staff(
+                notes: const [
+                  // Example in C major showing courtesy accidentals and natural signs
+                  Note(
+                      midiPitch: 60,
+                      duration: NoteDuration.quarter,
+                      linePosition: 0,
+                      accidentalType: AccidentalType.none), // C4
+                  Note(
+                      midiPitch: 61,
+                      duration: NoteDuration.quarter,
+                      linePosition: 0,
+                      accidentalType: AccidentalType.sharp), // C#4
+                  Note(
+                      midiPitch: 60,
+                      duration: NoteDuration.quarter,
+                      linePosition: 0,
+                      accidentalType:
+                          AccidentalType.natural), // C4 with natural
+                  Note(
+                      midiPitch: 62,
+                      duration: NoteDuration.quarter,
+                      linePosition: 0,
+                      accidentalType: AccidentalType.none), // D4
+                  // Example of double accidentals
+                  Note(
+                      midiPitch: 61,
+                      duration: NoteDuration.quarter,
+                      linePosition: 0,
+                      accidentalType: AccidentalType.doubleSharp), // C##4
+                  Note(
+                      midiPitch: 59,
+                      duration: NoteDuration.quarter,
+                      linePosition: 0,
+                      accidentalType: AccidentalType.doubleFlat), // Cbb4
+                ],
+                clef: Clef.treble,
+                timeSignature: const TimeSignature(4, 4),
+                keySignature:
+                    KeySignature(key: MusicalKey.c, mode: KeyMode.major),
+              ),
+            ),
+            // Add fourth staff demonstrating accidentals in different key signatures
+            SizedBox(
+              height: 200,
+              width: double.infinity,
+              child: Staff(
+                notes: const [
+                  // Example in Bb major showing how accidentals work with flats
+                  Note(
+                      midiPitch: 58,
+                      duration: NoteDuration.quarter,
+                      linePosition: 0,
+                      accidentalType: AccidentalType.none), // A#4/Bb4
+                  Note(
+                      midiPitch: 60,
+                      duration: NoteDuration.quarter,
+                      linePosition: 0,
+                      accidentalType:
+                          AccidentalType.natural), // C5 with natural
+                  Note(
+                      midiPitch: 58,
+                      duration: NoteDuration.quarter,
+                      linePosition: 0,
+                      accidentalType: AccidentalType.flat), // Bb4
+                  Note(
+                      midiPitch: 57,
+                      duration: NoteDuration.quarter,
+                      linePosition: 0,
+                      accidentalType: AccidentalType.none), // A4
+                ],
+                clef: Clef.treble,
+                timeSignature: const TimeSignature(4, 4),
+                keySignature:
+                    KeySignature(key: MusicalKey.bb, mode: KeyMode.major),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-// To use this example, add the following to your main.dart:
-// import 'package:flutter/material.dart';
-// import 'package:flutter_music_render/flutter_music_render.dart';
+/// Accidental Rules Documentation:
+///
+/// 1. Key Signature Rules:
+///    - Notes in the key signature don't need accidentals unless they're altered
+///    - In A major (3 sharps: F#, C#, G#), these notes are shown with courtesy accidentals
+///    - Natural notes (A, B, D, E) are shown without accidentals
+///
+/// 2. Courtesy Accidentals:
+///    - Used when a note is repeated after being altered
+///    - Example: C4 -> C#4 -> C4 (natural sign needed)
+///    - Helps prevent confusion when reading the music
+///
+/// 3. Natural Signs:
+///    - Required when canceling a sharp/flat from the key signature
+///    - Example: In Bb major, C5 needs a natural sign to cancel the Bb
+///
+/// 4. Double Accidentals:
+///    - Double sharp (##) raises a note by two semitones
+///    - Double flat (bb) lowers a note by two semitones
+///    - Used in complex harmonic contexts
+///
+/// 5. Enharmonic Equivalents:
+///    - Same pitch can be written different ways (e.g., A# = Bb)
+///    - Choice depends on the musical context and key signature
+///    - Example: In Bb major, Bb is preferred over A#
+///
+/// 6. Accidental Duration:
+///    - Accidentals affect all notes of the same pitch in the same measure
+///    - Reset at the start of each new measure
+///    - Courtesy accidentals can be used across measures for clarity
 
 void main() {
   runApp(const MaterialApp(

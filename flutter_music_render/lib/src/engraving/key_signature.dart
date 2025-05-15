@@ -211,26 +211,34 @@ class KeySignature {
         break;
       }
     }
+
+    // If no previous note found, use key signature
     if (!foundPrevious) {
-      // No previous note of this base note and octave in the measure, use key signature
-      previousAccidental = isBaseNoteInKey
-          ? (isSharp ? AccidentalType.sharp : AccidentalType.flat)
-          : AccidentalType.none;
+      // For notes in the key signature, use the key's accidental type
+      if (isBaseNoteInKey) {
+        previousAccidental =
+            isSharp ? AccidentalType.sharp : AccidentalType.flat;
+      } else {
+        // For notes not in the key signature, they are natural
+        previousAccidental = AccidentalType.none;
+      }
       print(
           'No previous $baseNote$octave, using key signature accidental $previousAccidental');
     }
 
-    // Draw accidental if current accidental differs from previous
-    if (note.accidentalType != previousAccidental) {
-      print(
-          'Current accidental ${note.accidentalType} differs from previous $previousAccidental, needs accidental');
-      return true;
-    }
+    // Only show accidental if:
+    // 1. The note is in the key signature and has a different accidental than the key
+    // 2. The note is not in the key signature and has an explicit accidental (not natural)
+    // 3. The note has a different accidental than the previous note of the same pitch
+    final needsAccidental = isBaseNoteInKey
+        ? note.accidentalType != previousAccidental
+        : note.accidentalType != AccidentalType.none &&
+            note.accidentalType != AccidentalType.natural &&
+            note.accidentalType != previousAccidental;
 
-    // Otherwise, do not draw accidental
     print(
-        'Current accidental ${note.accidentalType} matches previous $previousAccidental, no accidental needed');
-    return false;
+        'Current accidental ${note.accidentalType} differs from previous $previousAccidental, needs accidental: $needsAccidental');
+    return needsAccidental;
   }
 
   /// Marks a note as tied

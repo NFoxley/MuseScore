@@ -43,7 +43,8 @@ class EngravingStyle {
   // Margins and distances
   static const double staffLineThickness = 0.08; // Thickness of staff lines
   static const double staffLineSpacing = 1.0; // Space between staff lines
-  static const double staffMargin = 2.0; // Margin around staff
+  static const double staffMargin =
+      0.5; // Margin around staff (reduced from 2.0)
   static const double clefMargin = 1.0; // Margin after clef
   static const double keysigMargin = 0.5; // Margin after key signature
   static const double timesigMargin = 5.0; // Margin after time signature
@@ -56,9 +57,9 @@ class EngravingStyle {
   static const double ledgerLineThickness = 0.1; // Thickness of ledger lines
   static const double ledgerLineLength = 0.4; // Length of ledger lines
   static const double accidentalDistance =
-      0.5; // Distance between note and accidental
+      0.1; // Distance between note and accidental (reduced from 0.2)
   static const double accidentalNoteDistance =
-      0.5; // Distance between accidental and note
+      0.1; // Distance between accidental and note (reduced from 0.2)
   static const double dotDistance = 0.3; // Distance between note and dot
   static const double graceNoteScale = 0.7; // Scale factor for grace notes
   static const double tupletBracketDistance =

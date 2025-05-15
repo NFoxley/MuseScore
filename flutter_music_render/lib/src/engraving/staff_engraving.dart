@@ -482,7 +482,7 @@ class StaffEngraving {
 
     // Add spacing between accidental and note
     final accidentalX =
-        x - spatium * 0.9; // Adjusted spacing to be more reasonable
+        x - spatium * 0.45; // Reduced from 0.9 to 0.45 for tighter spacing
 
     // Draw the accidental
     textPainter.paint(canvas, Offset(accidentalX, yOffset));
