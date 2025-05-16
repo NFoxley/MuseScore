@@ -226,15 +226,19 @@ class KeySignature {
           'No previous $baseNote$octave, using key signature accidental $previousAccidental');
     }
 
-    // Only show accidental if:
-    // 1. The note is in the key signature and has a different accidental than the key
-    // 2. The note is not in the key signature and has an explicit accidental (not natural)
-    // 3. The note has a different accidental than the previous note of the same pitch
+    // Determine if we need an accidental:
+    // 1. If the note is in the key signature:
+    //    - Show accidental if it differs from the key signature
+    // 2. If the note is not in the key signature:
+    //    - Show accidental if it's an explicit accidental (not natural)
+    //    - Show natural sign if previous note had an accidental
+    // 3. Always show accidental if it differs from the previous note
     final needsAccidental = isBaseNoteInKey
         ? note.accidentalType != previousAccidental
-        : note.accidentalType != AccidentalType.none &&
-            note.accidentalType != AccidentalType.natural &&
-            note.accidentalType != previousAccidental;
+        : (note.accidentalType != AccidentalType.none &&
+                note.accidentalType != AccidentalType.natural) ||
+            (note.accidentalType == AccidentalType.natural &&
+                previousAccidental != AccidentalType.none);
 
     print(
         'Current accidental ${note.accidentalType} differs from previous $previousAccidental, needs accidental: $needsAccidental');

@@ -101,15 +101,15 @@ class StaffState extends State<Staff> {
             );
           },
         ),
-        Positioned(
-          top: 8,
-          right: 8,
-          child: IconButton(
-            icon: const Icon(Icons.clear),
-            onPressed: clearNotes,
-            tooltip: 'Clear notes',
-          ),
-        ),
+        // Positioned(
+        //   top: 8,
+        //   right: 8,
+        //   child: IconButton(
+        //     icon: const Icon(Icons.clear),
+        //     onPressed: clearNotes,
+        //     tooltip: 'Clear notes',
+        //   ),
+        // ),
       ],
     );
   }

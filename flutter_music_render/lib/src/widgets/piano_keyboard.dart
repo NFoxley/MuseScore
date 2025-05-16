@@ -289,16 +289,17 @@ class _PianoKeyboardState extends State<PianoKeyboard>
 
               // Calculate MIDI pitch for black keys
               int midiPitch;
-              if (semitone == 0)
+              if (semitone == 0) {
                 midiPitch = _calculateMidiPitch(octave, 0) + 1; // C#
-              else if (semitone == 1)
+              } else if (semitone == 1) {
                 midiPitch = _calculateMidiPitch(octave, 1) + 1; // D#
-              else if (semitone == 3)
+              } else if (semitone == 3) {
                 midiPitch = _calculateMidiPitch(octave, 3) + 1; // F#
-              else if (semitone == 4)
+              } else if (semitone == 4) {
                 midiPitch = _calculateMidiPitch(octave, 4) + 1; // G#
-              else
+              } else {
                 midiPitch = _calculateMidiPitch(octave, 5) + 1; // A#
+              }
 
               return Positioned(
                 left: (index + 1) * whiteKeyWidth - blackKeyWidth / 2,
