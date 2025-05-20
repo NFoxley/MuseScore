@@ -249,11 +249,61 @@ class StaffModel {
     return staffLine;
   }
 
-  /// Position a note on the staff according to MuseScore's conventions
+  /// Calculate the stem direction for a note based on its position
+  /// Returns true for up stems, false for down stems
+  bool calculateStemDirection(double staffLine) {
+    // Middle line is at 2.0 (3rd line of staff)
+    return staffLine > 2.0;
+  }
+
+  /// Calculate the stem direction for a chord based on the average position of its notes
+  /// Returns true for up stems, false for down stems
+  bool calculateChordStemDirection(List<double> staffLines) {
+    if (staffLines.isEmpty) return true; // Default to up if no notes
+
+    // Calculate average position
+    double averageLine = staffLines.reduce((a, b) => a + b) / staffLines.length;
+
+    // If average is exactly on middle line, default to up
+    if (averageLine == 2.0) return true;
+
+    // Otherwise, stem points away from middle line
+    return averageLine > 2.0;
+  }
+
+  /// Position a note on the staff and determine its stem direction
   Note positionNote(Note note) {
-    double staffLine =
+    final staffLine =
         calculateStaffLine(note.midiPitch, accidentalType: note.accidentalType);
-    return note.copyWithStaffLine(staffLine);
+
+    // Calculate stem direction
+    final stemUp = calculateStemDirection(staffLine);
+
+    return note.copyWithStaffLine(staffLine).copyWithStemDirection(stemUp);
+  }
+
+  /// Position a chord on the staff and determine its stem direction
+  List<Note> positionChord(List<Note> notes) {
+    if (notes.isEmpty) return notes;
+
+    // Position each note and collect staff lines
+    final staffLines = <double>[];
+    final positionedNotes = <Note>[];
+
+    for (var note in notes) {
+      final staffLine = calculateStaffLine(note.midiPitch,
+          accidentalType: note.accidentalType);
+      positionedNotes.add(note.copyWithStaffLine(staffLine));
+      staffLines.add(staffLine);
+    }
+
+    // Calculate stem direction for the entire chord
+    final stemUp = calculateChordStemDirection(staffLines);
+
+    // Apply the same stem direction to all notes in the chord
+    return positionedNotes
+        .map((note) => note.copyWithStemDirection(stemUp))
+        .toList();
   }
 
   /// Position multiple notes on the staff

@@ -335,7 +335,8 @@ class StaffEngraving {
       text: TextSpan(
         text: note.midiPitch == -1
             ? _getRestSymbol(note.duration) // Use rest symbol for rests
-            : _getNoteSymbol(note.duration), // Use note symbol for notes
+            : _getNoteSymbol(note.duration,
+                stemUp: note.stemUp), // Use note symbol for notes
         style: TextStyle(
           fontFamily: 'Bravura',
           fontSize: spatium * 5.0,
@@ -496,20 +497,22 @@ class StaffEngraving {
   }
 
   /// Get the appropriate note symbol for a given duration
-  static String _getNoteSymbol(NoteDuration duration) {
+  static String _getNoteSymbol(NoteDuration duration, {bool stemUp = true}) {
     switch (duration) {
       case NoteDuration.whole:
-        return '\uE1D2'; // Whole note
+        return '\uE1D2'; // Whole note (no stem)
       case NoteDuration.half:
-        return '\uE1D3'; // Half note
+        return stemUp ? '\uE1D3' : '\uE1D4'; // Half note with up/down stem
       case NoteDuration.quarter:
-        return '\uE1D5'; // Quarter note
+        return stemUp ? '\uE1D5' : '\uE1D6'; // Quarter note with up/down stem
       case NoteDuration.eighth:
-        return '\uE1D7'; // Eighth note
+        return stemUp ? '\uE1D7' : '\uE1D8'; // Eighth note with up/down stem
       case NoteDuration.sixteenth:
-        return '\uE1D9'; // Sixteenth note
+        return stemUp ? '\uE1D9' : '\uE1DA'; // Sixteenth note with up/down stem
       default:
-        return '\uE1D5'; // Default to quarter note
+        return stemUp
+            ? '\uE1D5'
+            : '\uE1D6'; // Default to quarter note with up/down stem
     }
   }
 

@@ -23,59 +23,59 @@ class PianoKeyboardExample extends StatefulWidget {
 class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
   final List<Note> _notes = [
     // Whole note
-    const Note(
+    Note(
       midiPitch: 60, // C4
       duration: NoteDuration.whole,
       linePosition: 0,
       color: Colors.blue, // Example of a colored note
     ),
     // Half note
-    const Note(
+    Note(
       midiPitch: 62, // D4
       duration: NoteDuration.half,
       linePosition: 0,
       color: Colors.red, // Example of a colored note
     ),
     // Quarter note
-    const Note(
+    Note(
       midiPitch: 64, // E4
       duration: NoteDuration.quarter,
       linePosition: 0,
     ),
     // Eighth note
-    const Note(
+    Note(
       midiPitch: 65, // F4
       duration: NoteDuration.eighth,
       linePosition: 0,
     ),
     // Sixteenth note
-    const Note(
-      midiPitch: 67, // G4
+    Note(
+      midiPitch: 74, // G4
       duration: NoteDuration.sixteenth,
       linePosition: 0,
     ),
     // Rest examples with different durations
-    const Note(
+    Note(
       midiPitch: -1, // Whole rest
       duration: NoteDuration.whole,
       linePosition: 0,
     ),
-    const Note(
+    Note(
       midiPitch: -1, // Half rest
       duration: NoteDuration.half,
       linePosition: 0,
     ),
-    const Note(
+    Note(
       midiPitch: -1, // Quarter rest
       duration: NoteDuration.quarter,
       linePosition: 0,
     ),
-    const Note(
+    Note(
       midiPitch: -1, // Eighth rest
       duration: NoteDuration.eighth,
       linePosition: 0,
     ),
-    const Note(
+    Note(
       midiPitch: -1, // Sixteenth rest
       duration: NoteDuration.sixteenth,
       linePosition: 0,
@@ -302,7 +302,7 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
               height: 200,
               width: double.infinity,
               child: Staff(
-                notes: const [
+                notes: [
                   // A major scale from A2 to A3 in bass clef
                   // Each note has its proper staff position and accidental type
                   Note(
@@ -357,7 +357,7 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
               height: 200,
               width: double.infinity,
               child: Staff(
-                notes: const [
+                notes: [
                   // Example in C major showing courtesy accidentals and natural signs
                   Note(
                       midiPitch: 60,
@@ -403,7 +403,7 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
               height: 200,
               width: double.infinity,
               child: Staff(
-                notes: const [
+                notes: [
                   // Example in Bb major showing how accidentals work with flats
                   Note(
                       midiPitch: 58,

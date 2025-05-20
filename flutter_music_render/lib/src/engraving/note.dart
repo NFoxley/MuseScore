@@ -33,6 +33,9 @@ class Note {
   /// The staff line position (calculated)
   final double staffLine;
 
+  /// Whether the stem points up (true) or down (false)
+  final bool stemUp;
+
   /// Creates a new note
   const Note({
     required this.midiPitch,
@@ -41,6 +44,7 @@ class Note {
     this.accidentalType = AccidentalType.none,
     this.showAccidental = false,
     this.color,
+    this.stemUp = true, // Default to up stem
   }) : staffLine = linePosition;
 
   /// Creates a copy of this note with the given fields replaced with new values
@@ -51,6 +55,7 @@ class Note {
     AccidentalType? accidentalType,
     bool? showAccidental,
     Color? color,
+    bool? stemUp,
   }) {
     return Note(
       midiPitch: midiPitch ?? this.midiPitch,
@@ -59,6 +64,7 @@ class Note {
       accidentalType: accidentalType ?? this.accidentalType,
       showAccidental: showAccidental ?? this.showAccidental,
       color: color ?? this.color,
+      stemUp: stemUp ?? this.stemUp,
     );
   }
 
@@ -71,6 +77,20 @@ class Note {
       accidentalType: accidentalType,
       showAccidental: showAccidental,
       color: color,
+      stemUp: stemUp,
+    );
+  }
+
+  /// Creates a copy of this note with a new stem direction
+  Note copyWithStemDirection(bool stemUp) {
+    return Note(
+      midiPitch: midiPitch,
+      duration: duration,
+      linePosition: linePosition,
+      accidentalType: accidentalType,
+      showAccidental: showAccidental,
+      color: color,
+      stemUp: stemUp,
     );
   }
 
