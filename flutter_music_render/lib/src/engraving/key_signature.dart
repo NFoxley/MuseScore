@@ -105,7 +105,9 @@ class KeySignature {
       return note.accidentalType == keyAccidental;
     }
 
-    return false;
+    // For notes not in the key signature list, they are natural in the key
+    return note.accidentalType == AccidentalType.none ||
+        note.accidentalType == AccidentalType.natural;
   }
 
   /// Returns the accidental type for a note in the key signature
@@ -159,13 +161,17 @@ class KeySignature {
       } else {
         // If the note has a different accidental than the key signature
         noteState[note.pitchClass] = note.accidentalType;
-        alteredNotesInMeasure[baseNote] = note.accidentalType;
-        print('Note deviates from key signature, marked as altered');
+        if (note.accidentalType != AccidentalType.none &&
+            note.accidentalType != AccidentalType.natural) {
+          alteredNotesInMeasure[baseNote] = note.accidentalType;
+          print('Note deviates from key signature, marked as altered');
+        }
       }
     } else {
       // If the note is not in the key signature
       noteState[note.pitchClass] = note.accidentalType;
-      if (note.accidentalType != AccidentalType.none) {
+      if (note.accidentalType != AccidentalType.none &&
+          note.accidentalType != AccidentalType.natural) {
         alteredNotesInMeasure[baseNote] = note.accidentalType;
         print('Note has explicit accidental, marked as altered');
       }
@@ -227,21 +233,20 @@ class KeySignature {
     }
 
     // Determine if we need an accidental:
-    // 1. If the note is in the key signature:
-    //    - Show accidental if it differs from the key signature
-    // 2. If the note is not in the key signature:
-    //    - Show accidental if it's an explicit accidental (not natural)
-    //    - Show natural sign if previous note had an accidental
-    // 3. Always show accidental if it differs from the previous note
-    final needsAccidental = isBaseNoteInKey
-        ? note.accidentalType != previousAccidental
-        : (note.accidentalType != AccidentalType.none &&
-                note.accidentalType != AccidentalType.natural) ||
-            (note.accidentalType == AccidentalType.natural &&
-                previousAccidental != AccidentalType.none);
+    // If the current accidental differs from the previous accidental, ALWAYS show it
+    // Treat AccidentalType.none and AccidentalType.natural as the same
+    final needsAccidental = (note.accidentalType == AccidentalType.none &&
+            previousAccidental != AccidentalType.none &&
+            previousAccidental != AccidentalType.natural) ||
+        (note.accidentalType == AccidentalType.natural &&
+            previousAccidental != AccidentalType.none &&
+            previousAccidental != AccidentalType.natural) ||
+        (note.accidentalType != AccidentalType.none &&
+            note.accidentalType != AccidentalType.natural &&
+            note.accidentalType != previousAccidental);
 
     print(
-        'Current accidental ${note.accidentalType} differs from previous $previousAccidental, needs accidental: $needsAccidental');
+        'Current accidental ${note.accidentalType} and previous $previousAccidental, needs accidental: $needsAccidental');
     return needsAccidental;
   }
 

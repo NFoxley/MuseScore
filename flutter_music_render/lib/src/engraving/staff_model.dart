@@ -124,8 +124,8 @@ class StaffModel {
 
   /// Calculate the staff line value for a note based on MIDI pitch and clef
   double calculateStaffLine(int midiPitch, {AccidentalType? accidentalType}) {
-    print(
-        'Staff Model: Calculating staff line for MIDI $midiPitch, accidental ${accidentalType}');
+    // print(
+    //     'Staff Model: Calculating staff line for MIDI $midiPitch, accidental ${accidentalType}');
 
     // Handle enharmonic notes first
     if (accidentalType != null &&
@@ -133,8 +133,8 @@ class StaffModel {
         _enharmonicPositions.containsKey(midiPitch) &&
         _enharmonicPositions[midiPitch]!.containsKey(accidentalType)) {
       final position = _enharmonicPositions[midiPitch]![accidentalType]!;
-      print(
-          'Staff Model: Using enharmonic position $position for MIDI $midiPitch with accidental $accidentalType');
+      // print(
+      //     'Staff Model: Using enharmonic position $position for MIDI $midiPitch with accidental $accidentalType');
       return position;
     }
 
@@ -143,11 +143,11 @@ class StaffModel {
     switch (clef) {
       case Clef.treble:
         refPositions = _trebleRefPositions;
-        print('Staff Model: Using treble clef reference positions');
+        // print('Staff Model: Using treble clef reference positions');
         break;
       case Clef.bass:
         refPositions = _bassRefPositions;
-        print('Staff Model: Using bass clef reference positions');
+        // print('Staff Model: Using bass clef reference positions');
         break;
       case Clef.alto:
       case Clef.tenor:
@@ -159,8 +159,8 @@ class StaffModel {
     // Check if we have an exact match in our reference positions
     if (refPositions.containsKey(midiPitch)) {
       final position = refPositions[midiPitch]!;
-      print(
-          'Staff Model: Using exact reference position $position for MIDI $midiPitch');
+      // print(
+      //     'Staff Model: Using exact reference position $position for MIDI $midiPitch');
       return position;
     }
 
@@ -195,33 +195,33 @@ class StaffModel {
       // Calculate the staff line
       int semitoneDistance = midiPitch - lowerPitch;
       staffLine = lowerLine - (semitoneDistance * staffPerSemitone);
-      print(
-          'Staff Model: Interpolated between MIDI $lowerPitch (${lowerLine}) and MIDI $higherPitch (${higherLine})');
-      print(
-          'Staff Model: Semitone distance: $semitoneDistance, staff per semitone: $staffPerSemitone');
+      // print(
+      //     'Staff Model: Interpolated between MIDI $lowerPitch (${lowerLine}) and MIDI $higherPitch (${higherLine})');
+      // print(
+      //     'Staff Model: Semitone distance: $semitoneDistance, staff per semitone: $staffPerSemitone');
     } else if (lowerPitch != null) {
       // Extrapolate downward (higher staff line values for lower pitches)
       int semitoneDistance = lowerPitch - midiPitch;
       double staffPositionChange =
           semitoneDistance * (0.5); // Each semitone is 0.5 staff positions
       staffLine = lowerLine! + staffPositionChange;
-      print('Staff Model: Extrapolated below MIDI $lowerPitch (${lowerLine})');
-      print(
-          'Staff Model: Semitone distance: $semitoneDistance, using 0.5 positions per semitone');
+      // print('Staff Model: Extrapolated below MIDI $lowerPitch (${lowerLine})');
+      // print(
+      //     'Staff Model: Semitone distance: $semitoneDistance, using 0.5 positions per semitone');
     } else if (higherPitch != null) {
       // Extrapolate upward (lower staff line values for higher pitches)
       int semitoneDistance = midiPitch - higherPitch;
       double staffPositionChange =
           semitoneDistance * (0.5); // Each semitone is 0.5 staff positions
       staffLine = higherLine! - staffPositionChange;
-      print(
-          'Staff Model: Extrapolated above MIDI $higherPitch (${higherLine})');
-      print(
-          'Staff Model: Semitone distance: $semitoneDistance, using 0.5 positions per semitone');
+      // print(
+      //     'Staff Model: Extrapolated above MIDI $higherPitch (${higherLine})');
+      // print(
+      //     'Staff Model: Semitone distance: $semitoneDistance, using 0.5 positions per semitone');
     } else {
       // Fallback - This should not happen with our reference data
       staffLine = 0.0;
-      print('Staff Model: No reference data found! Using default position 0.0');
+      // print('Staff Model: No reference data found! Using default position 0.0');
     }
 
     // Apply clef-specific corrections
@@ -245,7 +245,7 @@ class StaffModel {
       }
     }
 
-    print('Staff Model: Calculated Staff Line: $staffLine');
+    // print('Staff Model: Calculated Staff Line: $staffLine');
     return staffLine;
   }
 

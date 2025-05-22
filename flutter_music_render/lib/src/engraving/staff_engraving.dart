@@ -39,17 +39,17 @@ class StaffEngraving {
     // Draw staff lines (now lines 0-4 from top to bottom)
     for (int i = 0; i < 5; i++) {
       final y = staffTop + i * spatium;
-      print('StaffEngraving: Drawing staff line $i at y: $y');
+      // print('StaffEngraving: Drawing staff line $i at y: $y');
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
 
     // Debug info - Now correctly labeled for staff lines 0-4
-    print('StaffEngraving: Staff lines from top to bottom:');
-    print('StaffEngraving: Top line (0): ${staffTop + 0 * spatium}');
-    print('StaffEngraving: Second line (1): ${staffTop + 1 * spatium}');
-    print('StaffEngraving: Middle line (2): ${staffTop + 2 * spatium}');
-    print('StaffEngraving: Fourth line (3): ${staffTop + 3 * spatium}');
-    print('StaffEngraving: Bottom line (4): ${staffTop + 4 * spatium}');
+    // print('StaffEngraving: Staff lines from top to bottom:');
+    // print('StaffEngraving: Top line (0): ${staffTop + 0 * spatium}');
+    // print('StaffEngraving: Second line (1): ${staffTop + 1 * spatium}');
+    // print('StaffEngraving: Middle line (2): ${staffTop + 2 * spatium}');
+    // print('StaffEngraving: Fourth line (3): ${staffTop + 3 * spatium}');
+    // print('StaffEngraving: Bottom line (4): ${staffTop + 4 * spatium}');
 
     // Draw clef
     final clefSymbol = getClefSymbol(clef);

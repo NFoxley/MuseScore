@@ -81,6 +81,11 @@ class _PianoKeyboardState extends State<PianoKeyboard>
   late AnimationController _animationController;
   final ScrollController _scrollController = ScrollController();
 
+  // Track if we're currently scrolling
+  bool _isScrolling = false;
+  // Track the last tap position for scroll detection
+  Offset? _lastTapPosition;
+
   @override
   void initState() {
     super.initState();
@@ -173,24 +178,29 @@ class _PianoKeyboardState extends State<PianoKeyboard>
   }
 
   void _handleKeyPress(int midiPitch) {
+    // Only trigger note entry if we're not scrolling
+    if (!_isScrolling) {
+      final note = Note(
+        midiPitch: midiPitch,
+        duration: NoteDuration.quarter,
+        linePosition: 0,
+        accidentalType: _getAccidentalType(midiPitch),
+        showAccidental: _shouldShowAccidental(midiPitch),
+      );
+      widget.onNoteSelected(note);
+    }
+  }
+
+  void _handleKeyDown(int midiPitch) {
     setState(() {
       _pressedKeys[midiPitch] = PianoKeyState.played;
     });
+  }
 
-    _animationController.forward(from: 0.0).then((_) {
-      setState(() {
-        _pressedKeys.remove(midiPitch);
-      });
+  void _handleKeyUp(int midiPitch) {
+    setState(() {
+      _pressedKeys.remove(midiPitch);
     });
-
-    final note = Note(
-      midiPitch: midiPitch,
-      duration: NoteDuration.quarter,
-      linePosition: 0,
-      accidentalType: _getAccidentalType(midiPitch),
-      showAccidental: _shouldShowAccidental(midiPitch),
-    );
-    widget.onNoteSelected(note);
   }
 
   @override
@@ -210,84 +220,54 @@ class _PianoKeyboardState extends State<PianoKeyboard>
     }
     final totalWidth = totalWhiteKeys * whiteKeyWidth;
 
-    return SingleChildScrollView(
-      controller: _scrollController,
-      scrollDirection: Axis.horizontal,
-      child: SizedBox(
-        width: totalWidth,
-        height: whiteKeyHeight,
-        child: Stack(
-          children: [
-            // White keys
-            Row(
-              children: List.generate(totalWhiteKeys, (index) {
-                final midiPitch = _getNthWhiteKey(startMidiPitch, index);
-                if (midiPitch > endMidiPitch) return const SizedBox.shrink();
+    return GestureDetector(
+      onHorizontalDragStart: (details) {
+        _isScrolling = true;
+        _lastTapPosition = details.globalPosition;
+      },
+      onHorizontalDragUpdate: (details) {
+        if (_lastTapPosition != null) {
+          final dx = details.globalPosition.dx - _lastTapPosition!.dx;
+          _scrollController.jumpTo(_scrollController.offset - dx);
+          _lastTapPosition = details.globalPosition;
+        }
+      },
+      onHorizontalDragEnd: (_) {
+        _isScrolling = false;
+        _lastTapPosition = null;
+      },
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        scrollDirection: Axis.horizontal,
+        physics:
+            const NeverScrollableScrollPhysics(), // Disable default scrolling
+        child: SizedBox(
+          width: totalWidth,
+          height: whiteKeyHeight,
+          child: Stack(
+            children: [
+              // White keys
+              Row(
+                children: List.generate(totalWhiteKeys, (index) {
+                  final midiPitch = _getNthWhiteKey(startMidiPitch, index);
+                  if (midiPitch > endMidiPitch) return const SizedBox.shrink();
 
-                return SizedBox(
-                  width: whiteKeyWidth,
-                  height: whiteKeyHeight,
-                  child: Stack(
-                    children: [
-                      InkWell(
-                        onTapDown: (_) => _handleKeyPress(midiPitch),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: _getKeyColor(true, midiPitch),
-                            border: Border.all(color: Colors.black),
-                            borderRadius: const BorderRadius.vertical(
-                              bottom: Radius.circular(4),
-                            ),
-                          ),
-                          child: Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 4),
-                              child: Text(
-                                _getNoteLabel(midiPitch),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-            ),
-            // Black keys
-            ...List.generate(totalWhiteKeys - 1, (index) {
-              final whiteKeyPitch = _getNthWhiteKey(startMidiPitch, index);
-              if (whiteKeyPitch >= endMidiPitch) return const SizedBox.shrink();
-
-              // Check if there's a black key between this white key and the next
-              final nextWhiteKeyPitch =
-                  _getNthWhiteKey(startMidiPitch, index + 1);
-              if (nextWhiteKeyPitch > endMidiPitch)
-                return const SizedBox.shrink();
-
-              // If there's a black key between these white keys
-              if (nextWhiteKeyPitch - whiteKeyPitch == 2) {
-                final blackKeyPitch = whiteKeyPitch + 1;
-                return Positioned(
-                  left: (index + 1) * whiteKeyWidth - blackKeyWidth / 2,
-                  top: 0,
-                  child: SizedBox(
-                    width: blackKeyWidth,
-                    height: blackKeyHeight,
+                  return SizedBox(
+                    width: whiteKeyWidth,
+                    height: whiteKeyHeight,
                     child: Stack(
                       children: [
-                        InkWell(
-                          onTapDown: (_) => _handleKeyPress(blackKeyPitch),
+                        GestureDetector(
+                          onTapDown: (_) => _handleKeyDown(midiPitch),
+                          onTapUp: (_) {
+                            _handleKeyUp(midiPitch);
+                            _handleKeyPress(midiPitch);
+                          },
+                          onTapCancel: () => _handleKeyUp(midiPitch),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: _getKeyColor(false, blackKeyPitch),
+                              color: _getKeyColor(true, midiPitch),
+                              border: Border.all(color: Colors.black),
                               borderRadius: const BorderRadius.vertical(
                                 bottom: Radius.circular(4),
                               ),
@@ -297,11 +277,11 @@ class _PianoKeyboardState extends State<PianoKeyboard>
                               child: Padding(
                                 padding: const EdgeInsets.only(bottom: 4),
                                 child: Text(
-                                  _getNoteLabel(blackKeyPitch),
+                                  _getNoteLabel(midiPitch),
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     fontSize: 14,
-                                    color: Colors.white,
+                                    color: Colors.black,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -311,12 +291,72 @@ class _PianoKeyboardState extends State<PianoKeyboard>
                         ),
                       ],
                     ),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            }),
-          ],
+                  );
+                }),
+              ),
+              // Black keys
+              ...List.generate(totalWhiteKeys - 1, (index) {
+                final whiteKeyPitch = _getNthWhiteKey(startMidiPitch, index);
+                if (whiteKeyPitch >= endMidiPitch)
+                  return const SizedBox.shrink();
+
+                // Check if there's a black key between this white key and the next
+                final nextWhiteKeyPitch =
+                    _getNthWhiteKey(startMidiPitch, index + 1);
+                if (nextWhiteKeyPitch > endMidiPitch)
+                  return const SizedBox.shrink();
+
+                // If there's a black key between these white keys
+                if (nextWhiteKeyPitch - whiteKeyPitch == 2) {
+                  final blackKeyPitch = whiteKeyPitch + 1;
+                  return Positioned(
+                    left: (index + 1) * whiteKeyWidth - blackKeyWidth / 2,
+                    top: 0,
+                    child: SizedBox(
+                      width: blackKeyWidth,
+                      height: blackKeyHeight,
+                      child: Stack(
+                        children: [
+                          GestureDetector(
+                            onTapDown: (_) => _handleKeyDown(blackKeyPitch),
+                            onTapUp: (_) {
+                              _handleKeyUp(blackKeyPitch);
+                              _handleKeyPress(blackKeyPitch);
+                            },
+                            onTapCancel: () => _handleKeyUp(blackKeyPitch),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: _getKeyColor(false, blackKeyPitch),
+                                borderRadius: const BorderRadius.vertical(
+                                  bottom: Radius.circular(4),
+                                ),
+                              ),
+                              child: Align(
+                                alignment: Alignment.bottomCenter,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 4),
+                                  child: Text(
+                                    _getNoteLabel(blackKeyPitch),
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              }),
+            ],
+          ),
         ),
       ),
     );
