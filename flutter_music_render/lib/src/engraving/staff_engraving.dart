@@ -2,7 +2,7 @@
 ///
 /// This module is responsible for handling the placement and rendering of staff
 /// elements according to standard music notation rules.
-import 'dart:ui';
+// import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import 'note.dart';
@@ -10,7 +10,7 @@ import 'clef.dart';
 import 'key_signature.dart';
 import 'time_signature.dart';
 import 'engraving.dart';
-import 'note_engraving.dart' hide StaffModel;
+// import 'note_engraving.dart' hide StaffModel;
 import 'staff_model.dart';
 
 /// Class for staff engraving
@@ -25,11 +25,11 @@ class StaffEngraving {
     List<Note> notes, {
     required double spatium,
   }) {
-    print('StaffEngraving: Drawing staff with spatium: $spatium');
+    // print('StaffEngraving: Drawing staff with spatium: $spatium');
     final staffHeight = spatium * 4; // 4 spaces between 5 lines
     final staffTop = (size.height - staffHeight) / 2;
-    print('StaffEngraving: Staff height: $staffHeight, Staff top: $staffTop');
-    print('StaffEngraving: Size: $size');
+    // print('StaffEngraving: Staff height: $staffHeight, Staff top: $staffTop');
+    // print('StaffEngraving: Size: $size');
 
     final paint = Paint()
       ..color = Colors.black
@@ -328,8 +328,8 @@ class StaffEngraving {
   /// Draw a note on the staff
   static void drawNote(
       Canvas canvas, Note note, double x, double y, double spatium) {
-    print('DRAW: Base y position: $y');
-    print('DRAW: Spatium: $spatium');
+    // print('DRAW: Base y position: $y');
+    // print('DRAW: Spatium: $spatium');
 
     final textPainter = TextPainter(
       text: TextSpan(
@@ -362,21 +362,21 @@ class StaffEngraving {
       final restY = staffTop + (staffLine * spatium);
       yOffset =
           restY - (textPainter.height / 2.5); // Center the rest vertically
-      print(
-          'DRAW: Calculated rest yOffset: $yOffset (restY: $restY, staffTop: $staffTop)');
+      // print(
+      // 'DRAW: Calculated rest yOffset: $yOffset (restY: $restY, staffTop: $staffTop)');
     } else {
       // Regular note positioning
       final opticalCenterRatio = 0.5;
       final verticalOffset = textPainter.height * opticalCenterRatio;
       yOffset = y - verticalOffset;
-      print('DRAW: Note yOffset: $yOffset');
+      // print('DRAW: Note yOffset: $yOffset');
     }
 
     textPainter.paint(canvas, Offset(xOffset, yOffset));
 
-    print('DRAW: Drawing note at ($xOffset, $yOffset)');
-    print('DRAW: Note height: ${textPainter.height}');
-    print('DRAW: Note width: ${textPainter.width}');
+    // print('DRAW: Drawing note at ($xOffset, $yOffset)');
+    // print('DRAW: Note height: ${textPainter.height}');
+    // print('DRAW: Note width: ${textPainter.width}');
   }
 
   /// Draw a flag on a note stem
@@ -489,10 +489,10 @@ class StaffEngraving {
     textPainter.paint(canvas, Offset(accidentalX, yOffset));
 
     // Debug information
-    print('DRAW: Drawing accidental $symbol at ($accidentalX, $yOffset)');
-    print('DRAW: Accidental height: ${textPainter.height}');
+    // print('DRAW: Drawing accidental $symbol at ($accidentalX, $yOffset)');
+    // print('DRAW: Accidental height: ${textPainter.height}');
     if (staffLine != null) {
-      print('DRAW: Staff line: $staffLine');
+      // print('DRAW: Staff line: $staffLine');
     }
   }
 

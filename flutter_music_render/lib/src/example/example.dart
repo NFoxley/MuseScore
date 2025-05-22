@@ -36,6 +36,12 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
       linePosition: 0,
       color: Colors.red, // Example of a colored note
     ),
+    Note(
+      midiPitch: 60, // C4
+      duration: NoteDuration.whole,
+      linePosition: 0,
+      color: Colors.blue, // Example of a colored note
+    ),
     // Quarter note
     Note(
       midiPitch: 64, // E4
@@ -431,6 +437,73 @@ class _PianoKeyboardExampleState extends State<PianoKeyboardExample> {
                 timeSignature: const TimeSignature(4, 4),
                 keySignature:
                     KeySignature(key: MusicalKey.bb, mode: KeyMode.major),
+              ),
+            ),
+            // Add fifth staff demonstrating dynamic key range
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Arbitrary Key Range Examples',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      const Text('D2-E3 Range'),
+                      SizedBox(
+                        height: 200,
+                        child: PianoKeyboard(
+                          notes: const [],
+                          onNoteSelected: (_) {},
+                          keySignature: KeySignature(key: MusicalKey.c),
+                          useFlats: false,
+                          clef: Clef.bass,
+                          keyRange: (38, 52), // D2-E3
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      const Text('F4-D6 Range'),
+                      SizedBox(
+                        height: 200,
+                        child: PianoKeyboard(
+                          notes: const [],
+                          onNoteSelected: (_) {},
+                          keySignature: KeySignature(key: MusicalKey.c),
+                          useFlats: false,
+                          clef: Clef.treble,
+                          keyRange: (65, 86), // F4-D6
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            // Add example of custom range with sharps
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Custom Range with Sharps (F#3-G#4)',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            SizedBox(
+              height: 200,
+              child: PianoKeyboard(
+                notes: const [],
+                onNoteSelected: (_) {},
+                keySignature: KeySignature(key: MusicalKey.c),
+                useFlats: false,
+                clef: Clef.treble,
+                keyRange: (54, 68), // F#3-G#4
               ),
             ),
           ],

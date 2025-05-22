@@ -40,6 +40,11 @@ class PianoKeyboard extends StatefulWidget {
   /// MIDI pitch to center in the viewport
   final int? centerMidiPitch;
 
+  /// Optional custom key range. If not provided, will be determined by clef.
+  /// The range is specified as (startMidiPitch, endMidiPitch) inclusive.
+  /// For example, (60, 72) would show from middle C (C4) to C5.
+  final (int, int)? keyRange;
+
   /// Minimum width for white keys
   static const double minWhiteKeyWidth = 48.0;
 
@@ -62,6 +67,7 @@ class PianoKeyboard extends StatefulWidget {
     required this.clef,
     this.keyStates,
     this.centerMidiPitch,
+    this.keyRange,
   });
 
   @override
@@ -102,21 +108,17 @@ class _PianoKeyboardState extends State<PianoKeyboard>
     if (widget.centerMidiPitch == null) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final (startOctave, endOctave) = _getOctaveRange();
-      final totalWhiteKeys = (endOctave - startOctave + 1) * 7;
+      final (startMidiPitch, endMidiPitch) = _getKeyRange();
+      final totalWhiteKeys = (endMidiPitch - startMidiPitch + 1);
       final totalWidth = totalWhiteKeys * PianoKeyboard.minWhiteKeyWidth;
 
       // Calculate the position of the target note
-      final targetOctave = (widget.centerMidiPitch! ~/ 12) - 1;
-      final pitchClass = widget.centerMidiPitch! % 12;
+      final targetMidiPitch = widget.centerMidiPitch!;
 
-      // Convert MIDI pitch to white key index
-      final whiteKeyIndex = _getWhiteKeyIndex(pitchClass);
-      final octaveOffset = targetOctave - startOctave;
-
-      if (octaveOffset < 0 || octaveOffset > endOctave - startOctave) {
+      if (targetMidiPitch < startMidiPitch || targetMidiPitch > endMidiPitch) {
         // Note is outside the visible range, scroll to the edge
-        final scrollPosition = octaveOffset < 0 ? 0.0 : totalWidth.toDouble();
+        final scrollPosition =
+            targetMidiPitch < startMidiPitch ? 0.0 : totalWidth.toDouble();
         _scrollController.animateTo(
           scrollPosition,
           duration: const Duration(milliseconds: 300),
@@ -127,7 +129,7 @@ class _PianoKeyboardState extends State<PianoKeyboard>
 
       // Calculate the center position
       final targetPosition =
-          (octaveOffset * 7 + whiteKeyIndex) * PianoKeyboard.minWhiteKeyWidth;
+          (targetMidiPitch - startMidiPitch) * PianoKeyboard.minWhiteKeyWidth;
       final viewportWidth = _scrollController.position.viewportDimension;
       final scrollPosition = targetPosition -
           (viewportWidth / 2) +
@@ -143,28 +145,6 @@ class _PianoKeyboardState extends State<PianoKeyboard>
         curve: Curves.easeInOut,
       );
     });
-  }
-
-  int _getWhiteKeyIndex(int pitchClass) {
-    // Convert MIDI pitch class to white key index (0-6)
-    switch (pitchClass) {
-      case 0:
-        return 0; // C
-      case 2:
-        return 1; // D
-      case 4:
-        return 2; // E
-      case 5:
-        return 3; // F
-      case 7:
-        return 4; // G
-      case 9:
-        return 5; // A
-      case 11:
-        return 6; // B
-      default:
-        return 0; // Default to C
-    }
   }
 
   @override
@@ -215,14 +195,19 @@ class _PianoKeyboardState extends State<PianoKeyboard>
 
   @override
   Widget build(BuildContext context) {
-    final (startOctave, endOctave) = _getOctaveRange();
+    final (startMidiPitch, endMidiPitch) = _getKeyRange();
     const whiteKeyWidth = 48.0;
     const blackKeyWidth = 32.0;
     const whiteKeyHeight = 200.0;
     const blackKeyHeight = 120.0;
 
-    // Calculate total width needed
-    final totalWhiteKeys = (endOctave - startOctave + 1) * 7;
+    // Calculate total width needed based on the number of white keys in range
+    int totalWhiteKeys = 0;
+    for (int pitch = startMidiPitch; pitch <= endMidiPitch; pitch++) {
+      if (_isWhiteKey(pitch)) {
+        totalWhiteKeys++;
+      }
+    }
     final totalWidth = totalWhiteKeys * whiteKeyWidth;
 
     return SingleChildScrollView(
@@ -236,9 +221,8 @@ class _PianoKeyboardState extends State<PianoKeyboard>
             // White keys
             Row(
               children: List.generate(totalWhiteKeys, (index) {
-                final octave = startOctave + (index ~/ 7);
-                final semitone = index % 7;
-                final midiPitch = _calculateMidiPitch(octave, semitone);
+                final midiPitch = _getNthWhiteKey(startMidiPitch, index);
+                if (midiPitch > endMidiPitch) return const SizedBox.shrink();
 
                 return SizedBox(
                   width: whiteKeyWidth,
@@ -246,7 +230,7 @@ class _PianoKeyboardState extends State<PianoKeyboard>
                   child: Stack(
                     children: [
                       InkWell(
-                        onTap: () => _handleKeyPress(midiPitch),
+                        onTapDown: (_) => _handleKeyPress(midiPitch),
                         child: Container(
                           decoration: BoxDecoration(
                             color: _getKeyColor(true, midiPitch),
@@ -279,66 +263,58 @@ class _PianoKeyboardState extends State<PianoKeyboard>
             ),
             // Black keys
             ...List.generate(totalWhiteKeys - 1, (index) {
-              final octave = startOctave + (index ~/ 7);
-              final semitone = index % 7;
+              final whiteKeyPitch = _getNthWhiteKey(startMidiPitch, index);
+              if (whiteKeyPitch >= endMidiPitch) return const SizedBox.shrink();
 
-              // Skip black keys between E-F and B-C
-              if (semitone == 2 || semitone == 6) {
+              // Check if there's a black key between this white key and the next
+              final nextWhiteKeyPitch =
+                  _getNthWhiteKey(startMidiPitch, index + 1);
+              if (nextWhiteKeyPitch > endMidiPitch)
                 return const SizedBox.shrink();
-              }
 
-              // Calculate MIDI pitch for black keys
-              int midiPitch;
-              if (semitone == 0) {
-                midiPitch = _calculateMidiPitch(octave, 0) + 1; // C#
-              } else if (semitone == 1) {
-                midiPitch = _calculateMidiPitch(octave, 1) + 1; // D#
-              } else if (semitone == 3) {
-                midiPitch = _calculateMidiPitch(octave, 3) + 1; // F#
-              } else if (semitone == 4) {
-                midiPitch = _calculateMidiPitch(octave, 4) + 1; // G#
-              } else {
-                midiPitch = _calculateMidiPitch(octave, 5) + 1; // A#
-              }
-
-              return Positioned(
-                left: (index + 1) * whiteKeyWidth - blackKeyWidth / 2,
-                top: 0,
-                child: SizedBox(
-                  width: blackKeyWidth,
-                  height: blackKeyHeight,
-                  child: Stack(
-                    children: [
-                      InkWell(
-                        onTap: () => _handleKeyPress(midiPitch),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: _getKeyColor(false, midiPitch),
-                            borderRadius: const BorderRadius.vertical(
-                              bottom: Radius.circular(4),
+              // If there's a black key between these white keys
+              if (nextWhiteKeyPitch - whiteKeyPitch == 2) {
+                final blackKeyPitch = whiteKeyPitch + 1;
+                return Positioned(
+                  left: (index + 1) * whiteKeyWidth - blackKeyWidth / 2,
+                  top: 0,
+                  child: SizedBox(
+                    width: blackKeyWidth,
+                    height: blackKeyHeight,
+                    child: Stack(
+                      children: [
+                        InkWell(
+                          onTapDown: (_) => _handleKeyPress(blackKeyPitch),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: _getKeyColor(false, blackKeyPitch),
+                              borderRadius: const BorderRadius.vertical(
+                                bottom: Radius.circular(4),
+                              ),
                             ),
-                          ),
-                          child: Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 4),
-                              child: Text(
-                                _getNoteLabel(midiPitch),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                            child: Align(
+                              alignment: Alignment.bottomCenter,
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Text(
+                                  _getNoteLabel(blackKeyPitch),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
+                );
+              }
+              return const SizedBox.shrink();
             }),
           ],
         ),
@@ -346,36 +322,50 @@ class _PianoKeyboardState extends State<PianoKeyboard>
     );
   }
 
-  /// Get the octave range based on the clef
-  (int, int) _getOctaveRange() {
+  /// Get the key range based on the clef or custom range
+  (int, int) _getKeyRange() {
+    if (widget.keyRange != null) {
+      return widget.keyRange!;
+    }
+
+    // Default ranges based on clef (in MIDI pitches)
     switch (widget.clef) {
       case Clef.treble:
-        return (4, 6); // C4-C6
+        return (60, 84); // C4-C6
       case Clef.bass:
-        return (2, 4); // C2-C4
+        return (36, 60); // C2-C4
       case Clef.alto:
-        return (3, 5); // C3-C5
+        return (48, 72); // C3-C5
       case Clef.tenor:
-        return (3, 5); // C3-C5
+        return (48, 72); // C3-C5
     }
   }
 
-  /// Calculate MIDI pitch for a key
-  int _calculateMidiPitch(int octave, int semitone) {
-    // For white keys (C, D, E, F, G, A, B)
-    // C = 0, D = 2, E = 4, F = 5, G = 7, A = 9, B = 11
-    // MIDI standard: Middle C (C4) is 60
-    final whiteKeySemitones = [0, 2, 4, 5, 7, 9, 11];
-    final semitoneIndex = semitone % 7;
+  /// Check if a MIDI pitch corresponds to a white key
+  bool _isWhiteKey(int midiPitch) {
+    final pitchClass = midiPitch % 12;
+    return pitchClass == 0 || // C
+        pitchClass == 2 || // D
+        pitchClass == 4 || // E
+        pitchClass == 5 || // F
+        pitchClass == 7 || // G
+        pitchClass == 9 || // A
+        pitchClass == 11; // B
+  }
 
-    // Calculate base pitch for the octave
-    // C4 (Middle C) is 60, so C3 is 48, C5 is 72, etc.
-    final basePitch = (octave * 12) + 12;
-    final pitch = basePitch + whiteKeySemitones[semitoneIndex];
+  /// Get the nth white key starting from a given MIDI pitch
+  int _getNthWhiteKey(int startPitch, int n) {
+    int currentPitch = startPitch;
+    int whiteKeysFound = 0;
 
-    print(
-        'MIDI calculation: octave $octave, semitone $semitone = MIDI $pitch (${_getNoteLabel(pitch)})');
-    return pitch;
+    while (whiteKeysFound < n) {
+      currentPitch++;
+      if (_isWhiteKey(currentPitch)) {
+        whiteKeysFound++;
+      }
+    }
+
+    return currentPitch;
   }
 
   /// Get the note label for a MIDI pitch
