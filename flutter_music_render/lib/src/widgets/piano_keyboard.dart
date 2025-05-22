@@ -105,6 +105,8 @@ class _PianoKeyboardState extends State<PianoKeyboard>
   void didUpdateWidget(PianoKeyboard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.centerMidiPitch != widget.centerMidiPitch) {
+      // Reset scroll position if centerMidiPitch changes
+      _scrollController.jumpTo(0);
       _centerNoteIfNeeded();
     }
   }
@@ -112,30 +114,29 @@ class _PianoKeyboardState extends State<PianoKeyboard>
   void _centerNoteIfNeeded() {
     if (widget.centerMidiPitch == null) return;
 
+    // Use a post-frame callback to ensure the widget is fully built and laid out
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final (startMidiPitch, endMidiPitch) = _getKeyRange();
-      final totalWhiteKeys = (endMidiPitch - startMidiPitch + 1);
-      final totalWidth = totalWhiteKeys * PianoKeyboard.minWhiteKeyWidth;
+      if (!mounted) return; // Check if widget is still mounted
 
-      // Calculate the position of the target note
+      final (startMidiPitch, endMidiPitch) = _getKeyRange();
       final targetMidiPitch = widget.centerMidiPitch!;
 
-      if (targetMidiPitch < startMidiPitch || targetMidiPitch > endMidiPitch) {
-        // Note is outside the visible range, scroll to the edge
-        final scrollPosition =
-            targetMidiPitch < startMidiPitch ? 0.0 : totalWidth.toDouble();
-        _scrollController.animateTo(
-          scrollPosition,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-        return;
+      // Calculate the position of the target note
+      int whiteKeysBeforeTarget = 0;
+      for (int pitch = startMidiPitch; pitch < targetMidiPitch; pitch++) {
+        if (_isWhiteKey(pitch)) {
+          whiteKeysBeforeTarget++;
+        }
       }
 
-      // Calculate the center position
+      // Calculate the total width of white keys before the target
       final targetPosition =
-          (targetMidiPitch - startMidiPitch) * PianoKeyboard.minWhiteKeyWidth;
+          whiteKeysBeforeTarget * PianoKeyboard.minWhiteKeyWidth;
+
+      // Get the viewport width
       final viewportWidth = _scrollController.position.viewportDimension;
+
+      // Calculate the scroll position to center the target note
       final scrollPosition = targetPosition -
           (viewportWidth / 2) +
           (PianoKeyboard.minWhiteKeyWidth / 2);
@@ -143,6 +144,13 @@ class _PianoKeyboardState extends State<PianoKeyboard>
       // Ensure we don't scroll beyond bounds
       final maxScroll = _scrollController.position.maxScrollExtent;
       final clampedScroll = scrollPosition.clamp(0.0, maxScroll);
+
+      debugPrint('Centering note: MIDI pitch $targetMidiPitch');
+      debugPrint('White keys before target: $whiteKeysBeforeTarget');
+      debugPrint('Target position: $targetPosition');
+      debugPrint('Viewport width: $viewportWidth');
+      debugPrint('Scroll position: $scrollPosition');
+      debugPrint('Clamped scroll: $clampedScroll');
 
       _scrollController.animateTo(
         clampedScroll,
