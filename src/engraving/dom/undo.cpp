@@ -557,8 +557,9 @@ void UndoStack::redo(EditData* ed)
 
 bool UndoMacro::canRecordSelectedElement(const EngravingItem* e)
 {
-    return e->isNote() || (e->isChordRest() && !e->isChord()) || (e->isTextBase() && !e->isInstrumentName()) || e->isFretDiagram()
-           || e->isSoundFlag();
+    return e->isNote() || (e->isChordRest() && !e->isChord())
+           || (e->isTextBase() && !e->isInstrumentName() && !e->isHammerOnPullOffText())
+           || e->isFretDiagram() || e->isSoundFlag();
 }
 
 void UndoMacro::fillSelectionInfo(SelectionInfo& info, const Selection& sel)
@@ -1905,7 +1906,7 @@ ChangeStaff::ChangeStaff(Staff* _staff)
 }
 
 ChangeStaff::ChangeStaff(Staff* _staff, bool _visible, ClefTypeList _clefType,
-                         double _userDist, Staff::HideMode _hideMode, bool _showIfEmpty, bool _cutaway,
+                         Spatium _userDist, Staff::HideMode _hideMode, bool _showIfEmpty, bool _cutaway,
                          bool _hideSystemBarLine, AutoOnOff _mergeMatchingRests, bool _reflectTranspositionInLinkedTab)
 {
     staff       = _staff;
@@ -1928,7 +1929,7 @@ void ChangeStaff::flip(EditData*)
 {
     bool oldVisible = staff->visible();
     ClefTypeList oldClefType = staff->defaultClefType();
-    double oldUserDist   = staff->userDist();
+    Spatium oldUserDist   = staff->userDist();
     Staff::HideMode oldHideMode    = staff->hideWhenEmpty();
     bool oldShowIfEmpty = staff->showIfEmpty();
     bool oldCutaway     = staff->cutaway();
@@ -1938,7 +1939,7 @@ void ChangeStaff::flip(EditData*)
 
     staff->setVisible(visible);
     staff->setDefaultClefType(clefType);
-    staff->setUserDist(Millimetre(userDist));
+    staff->setUserDist(userDist);
     staff->setHideWhenEmpty(hideMode);
     staff->setShowIfEmpty(showIfEmpty);
     staff->setCutaway(cutaway);
@@ -2770,8 +2771,6 @@ void ChangeClefType::flip(EditData*)
 
     concertClef     = ocl;
     transposingClef = otc;
-    // layout the clef to align the currentClefType with the actual one immediately
-    clef->renderer()->layoutItem(clef);
 }
 
 //---------------------------------------------------------
@@ -3457,4 +3456,29 @@ void ChangeTieJumpPointActive::flip(EditData*)
 
     jumpPoint->setActive(m_active);
     m_active = oldActive;
+}
+
+FretLinkHarmony::FretLinkHarmony(FretDiagram* diagram, Harmony* harmony, bool unlink)
+{
+    m_fretDiagram = diagram;
+    m_harmony = harmony;
+    m_unlink = unlink;
+}
+
+void FretLinkHarmony::undo(EditData*)
+{
+    if (m_unlink) {
+        m_fretDiagram->linkHarmony(m_harmony);
+    } else {
+        m_fretDiagram->unlinkHarmony();
+    }
+}
+
+void FretLinkHarmony::redo(EditData*)
+{
+    if (m_unlink) {
+        m_fretDiagram->unlinkHarmony();
+    } else {
+        m_fretDiagram->linkHarmony(m_harmony);
+    }
 }

@@ -69,6 +69,7 @@
 #include "dom/guitarbend.h"
 
 #include "dom/hairpin.h"
+#include "dom/hammeronpulloff.h"
 #include "dom/harppedaldiagram.h"
 #include "dom/harmonicmark.h"
 #include "dom/harmony.h"
@@ -275,6 +276,12 @@ void TLayout::layoutItem(EngravingItem* item, LayoutContext& ctx)
     case ElementType::HAIRPIN:          layoutHairpin(item_cast<Hairpin*>(item), ctx);
         break;
     case ElementType::HAIRPIN_SEGMENT:  layoutHairpinSegment(item_cast<HairpinSegment*>(item), ctx);
+        break;
+    case ElementType::HAMMER_ON_PULL_OFF: layoutHammerOnPullOff(item_cast<HammerOnPullOff*>(item), ctx);
+        break;
+    case ElementType::HAMMER_ON_PULL_OFF_SEGMENT: layoutHammerOnPullOffSegment(item_cast<HammerOnPullOffSegment*>(item), ctx);
+        break;
+    case ElementType::HAMMER_ON_PULL_OFF_TEXT: layoutHammerOnPullOffText(item_cast<HammerOnPullOffText*>(item), ctx);
         break;
     case ElementType::HARP_DIAGRAM:
         layoutHarpPedalDiagram(item_cast<const HarpPedalDiagram*>(item), static_cast<HarpPedalDiagram::LayoutData*>(ldata));
@@ -1112,6 +1119,14 @@ void TLayout::layoutBarLine(const BarLine* item, BarLine::LayoutData* ldata, con
         default:
             UNREACHABLE;
         }
+    }
+
+    if (!item->segment()) {
+        return;
+    }
+
+    if (Fermata* fermata = toFermata(item->segment()->findAnnotation(ElementType::FERMATA, item->track(), item->track() + VOICES))) {
+        layoutFermata(fermata, fermata->mutldata(), ctx.conf());
     }
 }
 
@@ -2112,7 +2127,7 @@ void TLayout::layoutFermata(const Fermata* item, Fermata::LayoutData* ldata, con
     }
 
     double x = 0.0;
-    double y = 0.0;
+    double y = item->placeAbove() ? 0.0 : item->staff()->staffHeight(item->tick());
     const Segment* s = item->segment();
     const EngravingItem* e = s->element(item->track());
 
@@ -2123,14 +2138,11 @@ void TLayout::layoutFermata(const Fermata* item, Fermata::LayoutData* ldata, con
         if (e->isChord()) {
             const Chord* chord = toChord(e);
             x = chord->x() + chord->centerX();
-            y = chord->y();
         } else if (e->isRest()) {
             const Rest* rest = toRest(e);
             x = rest->x() + rest->centerX();
-            y = rest->y();
         } else {
             x = e->x() - e->shape().left() + e->width() * item->staff()->staffMag(Fraction(0, 1)) * .5;
-            y = e->y();
         }
     }
 
@@ -2146,9 +2158,27 @@ void TLayout::layoutFermata(const Fermata* item, Fermata::LayoutData* ldata, con
             const_cast<Fermata*>(item)->setSymId(SymNames::symIdByName(name.left(name.size() - 5) + u"Below"));
         }
     }
+
+    ldata->setShape(Shape(item->symBbox(item->symId()), item));
+    x -= 0.5 * ldata->bbox().width();
+
+    if (item->isStyled(Pid::OFFSET)) {
+        y += item->offset().y();
+    }
+    Shape staffShape = item->segment()->staffShape(item->staffIdx());
+    staffShape.removeTypes({ ElementType::FERMATA });
+    if (item->placeAbove()) {
+        double minDist = ldata->shape().minVerticalDistance(staffShape) + item->minDistance().toMM(item->spatium());
+        y = std::min(y, -minDist);
+    } else {
+        double minDist = staffShape.minVerticalDistance(ldata->shape()) + item->minDistance().toMM(item->spatium());
+        y = std::max(y, minDist);
+    }
+    if (item->isStyled(Pid::OFFSET)) {
+        y -= item->offset().y();
+    }
+
     ldata->setPos(x, y);
-    RectF b(item->symBbox(item->symId()));
-    ldata->setBbox(b.translated(-0.5 * b.width(), 0.0));
 
     if (item->autoplace()) {
         const Segment* s2 = item->segment();
@@ -2624,7 +2654,7 @@ void TLayout::layoutFretDiagram(const FretDiagram* item, FretDiagram::LayoutData
                 continue;
             }
             if ((barre.startString == 0 && item->numPos() == 0)
-                || (barre.endString == -1 && item->numPos() == 1)) {
+                || ((barre.endString == -1 || barre.endString == item->strings() - 1) && item->numPos() == 1)) {
                 padding += 0.20 * ldata->dotDiameter * ctx.conf().styleD(Sid::barreLineWidth);
                 break;
             }
@@ -3217,6 +3247,78 @@ void TLayout::layoutHairpin(Hairpin* item, LayoutContext& ctx)
     LAYOUT_CALL_ITEM(item);
     item->setPos(0.0, 0.0);
     layoutTextLineBase(item, ctx);
+}
+
+void TLayout::layoutHammerOnPullOff(HammerOnPullOff* item, LayoutContext& ctx)
+{
+    layoutSlur(static_cast<Slur*>(item), ctx);
+}
+
+void TLayout::layoutHammerOnPullOffSegment(HammerOnPullOffSegment* item, LayoutContext& ctx)
+{
+    // The layout of the slur has already been done. Here we layout the H/P letters.
+    item->updateHopoText();
+
+    System* system = item->system();
+    Fraction systemEndTick = system->endTick();
+    Skyline& sk = system->staff(item->staffIdx())->skyline();
+
+    for (HammerOnPullOffText* hopoText : item->hopoText()) {
+        bool above = hopoText->placeAbove();
+
+        Align align;
+        align.vertical = above ? AlignV::BASELINE : AlignV::TOP;
+        align.horizontal = AlignH::HCENTER;
+        hopoText->setAlign(align);
+        layoutItem(hopoText, ctx);
+
+        const Chord* startChord = hopoText->startChord();
+        const Chord* endChord = hopoText->endChord();
+        double startX = startChord->systemPos().x() + startChord->upNote()->headWidth();
+        double endX = startX;
+        if (endChord->tick() < systemEndTick) {
+            endX = endChord->systemPos().x();
+        } else {
+            // The last endChord of this segment is in next system. Use end barline instead.
+            Segment* endSeg = system->lastMeasure()->last(SegmentType::BarLineType);
+            endX = endSeg ? endSeg->systemPos().x() : endX;
+        }
+        if (startChord->stem() && endChord->stem() && startChord->up() == above && endChord->up() == above) {
+            // Mid-way between centered on the notes and centered on the stems
+            endX += (above ? 0.5 : -0.5) * endChord->upNote()->headWidth();
+        }
+        double centerX = 0.5 * (startX + endX);
+
+        double vertPadding = 0.5 * item->spatium();
+        Shape hopoTextShape = hopoText->ldata()->shape().translated(PointF(centerX, 0.0));
+        SkylineLine& skyline = above ? sk.north() : sk.south();
+        double y = above ? -skyline.minDistanceToShapeAbove(hopoTextShape) : skyline.minDistanceToShapeBelow(hopoTextShape);
+        y += above ? -vertPadding : vertPadding;
+        y = above ? std::min(y, -vertPadding) : std::max(y, item->staff()->staffHeight(item->tick()) + vertPadding);
+
+        Note* startNote = above ? startChord->upNote() : startChord->downNote();
+        Note* endNote = above ? endChord->upNote() : endChord->downNote();
+        double yNoteLimit = above ? std::min(startNote->y(), endNote->y()) - 2 * vertPadding
+                            : std::max(startNote->y(), endNote->y()) + 2 * vertPadding;
+        y = above ? std::min(y, yNoteLimit) : std::max(y, yNoteLimit);
+
+        hopoText->mutldata()->setPos(centerX, y);
+
+        hopoTextShape.translateY(y);
+        skyline.add(hopoTextShape);
+    }
+
+    Shape hopoSegmentShape = item->mutldata()->shape();
+    for (HammerOnPullOffText* hopoText : item->hopoText()) {
+        hopoSegmentShape.add(hopoText->ldata()->shape().translated(hopoText->pos()));
+    }
+
+    item->mutldata()->setShape(hopoSegmentShape);
+}
+
+void TLayout::layoutHammerOnPullOffText(HammerOnPullOffText* item, LayoutContext& ctx)
+{
+    layoutBaseTextBase(item, ctx);
 }
 
 void TLayout::fillHairpinSegmentShape(const HairpinSegment* item, HairpinSegment::LayoutData* ldata)
@@ -4327,7 +4429,7 @@ void TLayout::layoutNote(const Note* item, Note::LayoutData* ldata)
         if (item->ghost()) {
             const_cast<Note*>(item)->setHeadHasParentheses(true, /* addToLinked= */ false, /* generated= */ true);
         } else {
-            const_cast<Note*>(item)->setHeadHasParentheses(false, /* addToLinked= */ false);
+            const_cast<Note*>(item)->setHeadHasParentheses(false, /*addToLinked=*/ false, /* generated= */ true);
         }
 
         double w = item->tabHeadWidth(tab);
@@ -4350,7 +4452,7 @@ void TLayout::layoutNote(const Note* item, Note::LayoutData* ldata)
             if (item->ghost()) {
                 const_cast<Note*>(item)->setHeadHasParentheses(true, /* addToLinked= */ false, /* generated= */ true);
             } else {
-                const_cast<Note*>(item)->setHeadHasParentheses(false, /* addToLinked= */ false);
+                const_cast<Note*>(item)->setHeadHasParentheses(false, /* addToLinked= */ false, /* generated= */ true);
             }
         }
 
@@ -4515,7 +4617,7 @@ void TLayout::layoutOrnamentCueNote(Ornament* item, LayoutContext& ctx)
     }
 
     ChordLayout::layoutChords3({ cueNoteChord }, { cueNote }, item->staff(), ctx);
-    ChordLayout::layoutLedgerLines({ cueNoteChord });
+    ChordLayout::layoutLedgerLines({ cueNoteChord }, ctx);
     AccidentalsLayout::layoutAccidentals({ cueNoteChord }, ctx);
     layoutChord(cueNoteChord, ctx);
 
@@ -5365,7 +5467,49 @@ void TLayout::layoutSlur(Slur* item, LayoutContext& ctx)
 void TLayout::layoutSpacer(Spacer* item, LayoutContext&)
 {
     LAYOUT_CALL_ITEM(item);
-    item->layout0();
+    Spacer::LayoutData* ldata = item->mutldata();
+
+    double spatium = item->spatium();
+
+    PainterPath path = PainterPath();
+    double w = spatium;
+    double b = w * .5;
+    double h = item->explicitParent() ? item->absoluteGap() : std::min(item->gap(), Spatium(4.0)).toMM(spatium).val();       // limit length for palette
+
+    switch (item->spacerType()) {
+    case SpacerType::DOWN:
+        path.lineTo(w, 0.0);
+        path.moveTo(b, 0.0);
+        path.lineTo(b, h);
+        path.lineTo(0.0, h - b);
+        path.moveTo(b, h);
+        path.lineTo(w, h - b);
+        break;
+    case SpacerType::UP:
+        path.moveTo(b, 0.0);
+        path.lineTo(0.0, b);
+        path.moveTo(b, 0.0);
+        path.lineTo(w, b);
+        path.moveTo(b, 0.0);
+        path.lineTo(b, h);
+        path.moveTo(0.0, h);
+        path.lineTo(w, h);
+        break;
+    case SpacerType::FIXED:
+        path.lineTo(w, 0.0);
+        path.moveTo(b, 0.0);
+        path.lineTo(b, h);
+        path.moveTo(0.0, h);
+        path.lineTo(w, h);
+        break;
+    }
+    ldata->path = path;
+    double lw = spatium * 0.4;
+    RectF bb(0, 0, w, h);
+    bb.adjust(-lw, -lw, lw, lw);
+    ldata->setBbox(bb);
+
+    item->setZ(0.0);
 }
 
 void TLayout::layoutSpanner(Spanner* item, LayoutContext& ctx)
@@ -6960,7 +7104,7 @@ void TLayout::layoutWhammyBarSegment(WhammyBarSegment* item, LayoutContext& ctx)
     Autoplace::autoplaceSpannerSegment(item, ldata, ctx.conf().spatium());
 }
 
-using LayoutSystemTypes = rtti::TypeList<LyricsLine, Slur, Volta>;
+using LayoutSystemTypes = rtti::TypeList<LyricsLine, Slur, HammerOnPullOff, Volta>;
 
 class LayoutSystemVisitor : public rtti::Visitor<LayoutSystemVisitor>
 {
