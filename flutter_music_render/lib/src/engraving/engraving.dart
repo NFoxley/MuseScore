@@ -435,16 +435,16 @@ class EngravingUtils {
 
     // Use the correct order from KeySignature class
     final order = isSharp ? KeySignature.sharpOrder : KeySignature.flatOrder;
-    print('Key signature order: $order');
+    // print('Key signature order: $order');
 
     double xOffset = 0.0;
 
     // Use the order directly - no need to reverse for flats as flatOrder is already correct
     final notes = order.sublist(0, count);
-    print('Processing notes in order: $notes');
+    // print('Processing notes in order: $notes');
 
     for (final note in notes) {
-      print('Processing note: $note');
+      // print('Processing note: $note');
       final linePosition = isSharp
           ? (clef == Clef.treble
               ? EngravingStyle.getTrebleSharpLine(note)
@@ -452,7 +452,7 @@ class EngravingUtils {
           : (clef == Clef.treble
               ? EngravingStyle.getTrebleFlatLine(note)
               : EngravingStyle.getBassFlatLine(note));
-      print('Line position for $note: $linePosition');
+      // print('Line position for $note: $linePosition');
 
       // Add position for this accidental
       positions.add(SpPoint(xOffset, linePosition));

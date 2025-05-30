@@ -68,15 +68,15 @@ class StaffEngraving {
     // Position clef at the correct height based on clef type
     final clefY =
         staffTop + (EngravingStyle.clefYPositions[clef]! - 2.0) * spatium;
-    print('StaffEngraving: Drawing clef at ($clefX, $clefY)');
+    // print('StaffEngraving: Drawing clef at ($clefX, $clefY)');
     clefTextPainter.paint(canvas, Offset(clefX, clefY));
 
     // Draw key signature
     if (keySignature != null) {
       final positions =
           EngravingUtils.getKeySignaturePositions(keySignature, clef);
-      print(
-          'Drawing key signature: ${keySignature.isSharp ? "sharp" : "flat"} with ${positions.length} accidentals');
+      // print(
+      //     'Drawing key signature: ${keySignature.isSharp ? "sharp" : "flat"} with ${positions.length} accidentals');
 
       var currentX =
           clefX + clefTextPainter.width + EngravingStyle.clefMargin * spatium;
@@ -90,7 +90,7 @@ class StaffEngraving {
             isSharp ? 0.1 : -0.1; // Adjust by 10% of spatium
         final symbolY =
             staffTop + ((position.y + verticalAdjustment) * spatium);
-        print('Drawing $symbol at ($symbolX, $symbolY)');
+        // print('Drawing $symbol at ($symbolX, $symbolY)');
 
         // Draw the accidental
         final textPainter = TextPainter(
@@ -118,7 +118,7 @@ class StaffEngraving {
     if (timeSignature != null) {
       final timeX = clefX + EngravingStyle.clefMargin * spatium;
       final timeY = staffTop + 1.25 * spatium; // Center on staff
-      print('StaffEngraving: Drawing time signature at ($timeX, $timeY)');
+      // print('StaffEngraving: Drawing time signature at ($timeX, $timeY)');
 
       final numeratorPainter = TextPainter(
         text: TextSpan(
@@ -167,11 +167,11 @@ class StaffEngraving {
     double startX, {
     required double spatium,
   }) {
-    print('DRAW: Drawing ${notes.length} notes with clef $clef');
+    // print('DRAW: Drawing ${notes.length} notes with clef $clef');
     final staffHeight = spatium * 4;
     final staffTop = (size.height - staffHeight) / 2;
-    print('DRAW: Staff dimensions - height: $staffHeight, top: $staffTop');
-    print('DRAW: Size: $size');
+    // print('DRAW: Staff dimensions - height: $staffHeight, top: $staffTop');
+    // print('DRAW: Size: $size');
 
     // Create a staff model to handle note positioning
     final staffModel = StaffModel(clef: clef);
@@ -191,11 +191,11 @@ class StaffEngraving {
     keySignature.initializeNoteState();
 
     for (final note in positionedNotes) {
-      print('DRAW: Note MIDI ${note.midiPitch} at X: $currentX');
+      // print('DRAW: Note MIDI ${note.midiPitch} at X: $currentX');
 
       // Calculate staff line position
       final staffLine = note.staffLine;
-      print('DRAW: Staff line: $staffLine');
+      // print('DRAW: Staff line: $staffLine');
 
       // Draw ledger lines if needed
       if (staffLine < 0 || staffLine > 4) {
@@ -220,8 +220,8 @@ class StaffEngraving {
 
       // Draw accidental if needed
       if (needsAccidental) {
-        print(
-            'DRAW: Drawing accidental \\${accidentalToShow} for note \\${note.getNoteName()}');
+        // print(
+        //     'DRAW: Drawing accidental \\${accidentalToShow} for note \\${note.getNoteName()}');
         drawAccidental(canvas, accidentalToShow, currentX - (spatium * 1.2),
             staffTop + (staffLine * spatium), spatium,
             staffLine: staffLine,

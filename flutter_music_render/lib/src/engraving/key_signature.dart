@@ -47,11 +47,11 @@ class KeySignature {
     // Mark notes that are in the key signature
     final keyAccidentals = isSharp ? sharpOrder : flatOrder;
     final count = accidentalCount();
-    print('Key Signature: ${key.toString()} (${isSharp ? "Sharps" : "Flats"})');
-    print('Notes in key: ${keyAccidentals.sublist(0, count)}');
+    // print('Key Signature: ${key.toString()} (${isSharp ? "Sharps" : "Flats"})');
+    // print('Notes in key: ${keyAccidentals.sublist(0, count)}');
 
     for (final note in keyAccidentals.sublist(0, count)) {
-      print('Adding ${note}${isSharp ? "♯" : "♭"} to key signature');
+      // print('Adding ${note}${isSharp ? "♯" : "♭"} to key signature');
       // Convert note name to pitch class
       final pitchClass = _getPitchClass(note);
       noteState[pitchClass] =
@@ -143,13 +143,13 @@ class KeySignature {
         note.getNoteName(useFlats: note.accidentalType == AccidentalType.flat);
     final baseNote = noteName[0];
 
-    print('\nUpdating state for note: ${noteName} (MIDI: ${note.midiPitch})');
+    // print('\nUpdating state for note: ${noteName} (MIDI: ${note.midiPitch})');
 
     // Check if this note's base name is in the key signature
     final keyAccidentals = isSharp ? sharpOrder : flatOrder;
     final count = accidentalCount();
     final isBaseNoteInKey = keyAccidentals.sublist(0, count).contains(baseNote);
-    print('Base note $baseNote is in key signature: $isBaseNoteInKey');
+    // print('Base note $baseNote is in key signature: $isBaseNoteInKey');
 
     // Track the current state of this note in the measure
     if (isBaseNoteInKey) {
@@ -157,14 +157,14 @@ class KeySignature {
       if (note.accidentalType ==
           (isSharp ? AccidentalType.sharp : AccidentalType.flat)) {
         noteState[note.pitchClass] = note.accidentalType;
-        print('Note matches key signature');
+        // print('Note matches key signature');
       } else {
         // If the note has a different accidental than the key signature
         noteState[note.pitchClass] = note.accidentalType;
         if (note.accidentalType != AccidentalType.none &&
             note.accidentalType != AccidentalType.natural) {
           alteredNotesInMeasure[baseNote] = note.accidentalType;
-          print('Note deviates from key signature, marked as altered');
+          // print('Note deviates from key signature, marked as altered');
         }
       }
     } else {
@@ -173,7 +173,7 @@ class KeySignature {
       if (note.accidentalType != AccidentalType.none &&
           note.accidentalType != AccidentalType.natural) {
         alteredNotesInMeasure[baseNote] = note.accidentalType;
-        print('Note has explicit accidental, marked as altered');
+        // print('Note has explicit accidental, marked as altered');
       }
     }
 
@@ -183,10 +183,10 @@ class KeySignature {
 
   /// Check if a note needs an accidental
   bool needsAccidental(Note note, List<Note> previousNotes) {
-    print(
-        '\nChecking accidental for note: ${note.getNoteName()} (MIDI: ${note.midiPitch})');
-    print(
-        'Previous notes: ${previousNotes.map((n) => n.getNoteName()).join(', ')}');
+    // print(
+    //     '\nChecking accidental for note: ${note.getNoteName()} (MIDI: ${note.midiPitch})');
+    // print(
+    //     'Previous notes: ${previousNotes.map((n) => n.getNoteName()).join(', ')}');
 
     // Get the base note name and octave
     final noteName =
@@ -198,7 +198,7 @@ class KeySignature {
     final keyAccidentals = isSharp ? sharpOrder : flatOrder;
     final count = accidentalCount();
     final isBaseNoteInKey = keyAccidentals.sublist(0, count).contains(baseNote);
-    print('Base note $baseNote is in key signature: $isBaseNoteInKey');
+    // print('Base note $baseNote is in key signature: $isBaseNoteInKey');
 
     // Find the most recent previous note with the same base note and octave
     AccidentalType previousAccidental = AccidentalType.none;
@@ -212,8 +212,8 @@ class KeySignature {
       if (prevBaseNote == baseNote && prevOctave == octave) {
         previousAccidental = prevNote.accidentalType;
         foundPrevious = true;
-        print(
-            'Most recent previous $baseNote$octave had accidental $previousAccidental');
+        // print(
+        //     'Most recent previous $baseNote$octave had accidental $previousAccidental');
         break;
       }
     }
@@ -228,8 +228,8 @@ class KeySignature {
         // For notes not in the key signature, they are natural
         previousAccidental = AccidentalType.none;
       }
-      print(
-          'No previous $baseNote$octave, using key signature accidental $previousAccidental');
+      // print(
+      //     'No previous $baseNote$octave, using key signature accidental $previousAccidental');
     }
 
     // Determine if we need an accidental:
@@ -245,8 +245,8 @@ class KeySignature {
             note.accidentalType != AccidentalType.natural &&
             note.accidentalType != previousAccidental);
 
-    print(
-        'Current accidental ${note.accidentalType} and previous $previousAccidental, needs accidental: $needsAccidental');
+    // print(
+    //     'Current accidental ${note.accidentalType} and previous $previousAccidental, needs accidental: $needsAccidental');
     return needsAccidental;
   }
 
